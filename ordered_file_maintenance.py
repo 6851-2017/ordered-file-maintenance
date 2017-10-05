@@ -1,4 +1,4 @@
-# jamb, rusch, nchanda2
+# jamb, rusch, nchinda2
 
 import math
 
@@ -33,7 +33,7 @@ def insert(elem, arr, pos):
 
 		if block_density >= min_density and block_density <= max_density:
 			# yay! we can stop at this level
-			_rewrite(arr, start, end)
+			_rewrite(arr, start, end, elem)
 			return
 
 		# in this case, this level isn't good enough and we need to iterate and rewrite at a higher level
@@ -53,7 +53,8 @@ def _num_blocks(arr, level):
 	return int((n-1)/(2**level * math.log(n, 2)))+1
 
 # rewrites all elements from i to j-1 to be evenly spread across the interval and return nothing
-def _rewrite(arr, i, j):
+# also inserts elem at the specified position while it's rewriting
+def _rewrite(arr, i, j, elem=None):
 	# call _collapse and _even_spread
 	pass
 
