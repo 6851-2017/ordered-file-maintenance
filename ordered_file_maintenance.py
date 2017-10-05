@@ -2,6 +2,19 @@
 
 arr = []
 
+def read(arr, pos):
+    x = 0
+    i = 0
+    while pos < x:
+        if arr[i]:
+            x += 1
+        i += 1
+
+        if i > len(arr):
+            raise Exception("Index not present")
+
+    return arr[x]
+
 # add the element elem to array arr at position pos, rewriting as needed to make space
 # return nothing; modify input array in place
 def insert(elem, arr, pos):
@@ -29,7 +42,9 @@ def _rewrite(arr, i, j):
 # rewrites all elements from i to j-1 to be on the left side of the interval,
 # and returns a count of how many elements it found
 def _collapse(arr, i, j):
-	pass
+	x = 0
+    y = 0
+
 
 # given the elements from i to j-1 are all on the left side of the interval, and there are n of them,
 # rewrite the elements to be evenly spread across the interval and return nothing
