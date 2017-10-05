@@ -24,7 +24,7 @@ class OrderedFile(list):
                     raise ValueError("attempted inserting past the end of the array")
 
             level = 0  # what level we're looking at within the tree, going from bottom up
-            height = int(math.log(len(arr-1), 2))+1  # height of tree, ceiling functioned
+            height = int(math.log(len(arr)-1, 2))+1  # height of tree, ceiling functioned
 
             while (True):
                     # check for being at a level such that we need to allocate more space in the array
