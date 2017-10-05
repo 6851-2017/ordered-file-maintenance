@@ -33,7 +33,8 @@ class OrderedFile(list):
             print(level, height)
             # check for being at a level such that we need to allocate more space in the array
             if level > height:
-                    arr += [None] * 2**height
+                arr += [None] * 2**height
+                height += 1
 
             num_blocks = arr._num_blocks(level)
             # blocklen = len(arr)/num_blocks; blocknum = int(pos/blocklen); start, end = block_index*blocklen, (block_index+1)*blocklen
@@ -98,7 +99,8 @@ class OrderedFile(list):
             else:
                 if elem is not None and pos is not None and readpos == pos:
                     write_values.append(elem)
-                write_values.append(arr[readpos])
+                if arr[readpos] is not None:
+                    write_values.append(arr[readpos])
                 readpos += 1
         if write_values:
             raise Exception("_collapse: not enough space to insert.")
