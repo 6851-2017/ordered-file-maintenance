@@ -7,7 +7,6 @@ arr = []
 # add the element elem to array arr at position pos, rewriting as needed to make space
 # return nothing; modify input array in place
 def insert(elem, arr, pos):
-	# TODO need to handle edge cases off bounds of array?
 	if pos > len(arr):
 		raise ValueError("attempted inserting past the end of the array")
 	
