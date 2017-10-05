@@ -1,88 +1,95 @@
-# jamb, rusch, nchanda2
+# jamb, rusch, nchinda2
 
 import math
 
-arr = []
+class OrderedFile:
 
-def read(arr, pos):
-    x = 0
-    i = 0
-    while pos < x:
-        if arr[i]:
-            x += 1
-        i += 1
+    def read(arr, pos):
+        x = 0
+        i = 0
+        while pos < x:
+            if arr[i]:
+                x += 1
+            i += 1
 
-        if i > len(arr):
-            raise Exception("Index not present")
+            if i > len(arr):
+                raise Exception("Index not present")
 
-    return arr[x]
+        return arr[x]
 
-# add the element elem to array arr at position pos, rewriting as needed to make space
-# return nothing; modify input array in place
-def insert(elem, arr, pos):
-	if pos > len(arr):
-		raise ValueError("attempted inserting past the end of the array")
-	
-	level = 0  # what level we're looking at within the tree, going from bottom up
-	height = int(math.log(len(arr-1), 2))+1  # height of tree, ceiling functioned
+    # add the element elem to the array at position pos, rewriting as needed to make space
+    # return nothing; modify the array in place
+    def insert(elem, pos):
+            if pos > len(arr):
+                    raise ValueError("attempted inserting past the end of the array")
 
-	while (True):
-		# check for being at a level such that we need to allocate more space in the array
-		if level > height:
-			arr += [None] * 2**height
+            level = 0  # what level we're looking at within the tree, going from bottom up
+            height = int(math.log(len(arr-1), 2))+1  # height of tree, ceiling functioned
 
-		num_blocks = _num_blocks(arr, level)  
-		# blocklen = len(arr)/num_blocks; blocknum = int(pos/blocklen); start, end = block_index*blocklen, (block_index+1)*blocklen
-		block_index = int(pos * num_blocks / len(arr))
-		start = int(block_index * len(arr) / num_blocks)
-		end = int((block_index + 1) * len(arr) / num_blocks)
-		block_element_count = _scan(arr, start, end)
-		block_max_elements = end - start
-		block_density = block_element_count / block_max_elements
+            while (True):
+                    # check for being at a level such that we need to allocate more space in the array
+                    if level > height:
+                            arr += [None] * 2**height
 
-		depth = height - level
-		max_density = 3/4 + 1/4*depth/height
-		min_density = 1/2 - 1/4*depth/height
+                    num_blocks = _num_blocks(arr, level)
+                    # blocklen = len(arr)/num_blocks; blocknum = int(pos/blocklen); start, end = block_index*blocklen, (block_index+1)*blocklen
+                    block_index = int(pos * num_blocks / len(arr))
+                    start = int(block_index * len(arr) / num_blocks)
+                    end = int((block_index + 1) * len(arr) / num_blocks)
+                    block_element_count = _scan(arr, start, end)
+                    block_max_elements = end - start
+                    block_density = block_element_count / block_max_elements
 
-		if block_density >= min_density and block_density <= max_density:
-			# yay! we can stop at this level
-			_rewrite(arr, start, end)
-			return
+                    depth = height - level
+                    max_density = 3/4 + 1/4*depth/height
+                    min_density = 1/2 - 1/4*depth/height
 
-		# in this case, this level isn't good enough and we need to iterate and rewrite at a higher level
-		level += 1
+                    if block_density >= min_density and block_density <= max_density:
+                            # yay! we can stop at this level
+                            _rewrite(arr, start, end, elem)
+                            return
 
+                    # in this case, this level isn't good enough and we need to iterate and rewrite at a higher level
+                    level += 1
 
-# return the number of items between i and j-1 in the array
-# also, while scanning, rewrite all elements from i to j-1 to be on the left side of the interval
-def _scan(arr, i, j):
-	pass
+    # remove the element from the array at the given position
+    # return nothing; modify the array in place
+    def delete(pos):
+        pass
 
-# given the level up the tree we're at, we have 2^level * log(n) things in a block
-# returns how many blocks there are in the tree at that level
-def _num_blocks(arr, level):
-	# ceiling function of n/2^level*logn
-	n = len(arr)
-	return int((n-1)/(2**level * math.log(n, 2)))+1
+    # return the number of items between i and j-1 in the array
+    # also, while scanning, rewrite all elements from i to j-1 to be on the left side of the interval
+    def _scan(i, j):
+            pass
 
-# rewrites all elements from i to j-1 to be evenly spread across the interval and return nothing
-def _rewrite(arr, i, j):
-	# call _collapse and _even_spread
-	pass
+    # given the level up the tree we're at, we have 2^level * log(n) things in a block
+    # returns how many blocks there are in the tree at that level
+    def _num_blocks(level):
+            # ceiling function of n/2^level*logn
+            n = len(arr)
+            return int((n-1)/(2**level * math.log(n, 2)))+1
 
-# rewrites all elements from i to j-1 to be on the left side of the interval,
-# and returns a count of how many elements it found
-def _collapse(arr, i, j):
-	x = 0
-    y = 0
+    # rewrites all elements from i to j-1 to be evenly spread across the interval and return nothing
+    # also inserts elem at the specified position while it's rewriting
+    def _rewrite(i, j, elem=None):
+            # call _collapse and _even_spread
+            pass
 
+    # rewrites all elements from i to j-1 to be on the left side of the interval,
+    # and returns a count of how many elements it found
+    def _collapse(self, i, j):
+	    found = [elem for elem in arr[i:j] if elem is not None]
+	    rewritten = found + [None]*(j-i-len(found))
+	    arr[i:j] = rewritten
+	    return len(found)
 
-# given the elements from i to j-1 are all on the left side of the interval, and there are n of them,
-# rewrite the elements to be evenly spread across the interval and return nothing
-def _even_spread(arr, i, j, n):
-    block_size = j - i
-    interval = block_size / n
+    # given the elements from i to j-1 are all on the left side of the interval, and there are n of them,
+    # rewrite the elements to be evenly spread across the interval and return nothing
+    def _even_spread(i, j, n):
+        block_size = j - i
+        interval = block_size / n
 
-    start = j % interval
-    for start, end in enumerate(range(i, j, interval))[::-1]:
-        arr[end], arr[start] = arr[start], None
+        start = j % interval
+        for start, end in enumerate(range(i, j, interval))[::-1]:
+            arr[end], arr[start] = arr[start], None
+
