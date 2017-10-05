@@ -1,4 +1,4 @@
-# jamb, rusch, nchanda2 
+# jamb, rusch, nchanda2
 
 arr = []
 
@@ -31,7 +31,12 @@ def _rewrite(arr, i, j):
 def _collapse(arr, i, j):
 	pass
 
-# given the elements from i to j-1 are all on the left side of the interval, and there are count of them,
+# given the elements from i to j-1 are all on the left side of the interval, and there are n of them,
 # rewrite the elements to be evenly spread across the interval and return nothing
-def _even_spread(arr, i, j, count):
-	pass
+def _even_spread(arr, i, j, n):
+    block_size = j - i
+    interval = block_size / n
+
+    start = j % interval
+    for start, end in enumerate(range(i, j, interval))[::-1]:
+        arr[end], arr[start] = arr[start], None
