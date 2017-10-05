@@ -3,6 +3,10 @@
 import math
 
 class OrderedFile(list):
+	
+    def __init__(self):
+	super(OrderedFile, self).__init__([None])
+	
 
     def read(arr, pos):
         x = 0
