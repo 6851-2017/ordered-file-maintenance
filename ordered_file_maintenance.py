@@ -66,8 +66,11 @@ class OrderedFile:
 
     # rewrites all elements from i to j-1 to be on the left side of the interval,
     # and returns a count of how many elements it found
-    def _collapse(i, j):
-            pass
+    def _collapse(self, i, j):
+	    found = [elem for elem in arr[i:j] if elem is not None]
+	    rewritten = found + [None]*(j-i-len(found))
+	    arr[i:j] = rewritten
+	    return len(found)
 
     # given the elements from i to j-1 are all on the left side of the interval, and there are n of them,
     # rewrite the elements to be evenly spread across the interval and return nothing
