@@ -1,12 +1,11 @@
-# jamb, rusch, nchinda2
+# jamb, rusch, nchinda2, luh
 
 import math
 
 class OrderedFile(list):
 	
     def __init__(self):
-	super(OrderedFile, self).__init__([None])
-	
+        super(OrderedFile, self).__init__([None])
 
     def read(arr, pos):
         x = 0
