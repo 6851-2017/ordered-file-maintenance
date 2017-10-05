@@ -28,9 +28,9 @@ class OrderedFile(list):
             raise ValueError("attempted inserting past the end of the array")
 
         level = 0  # what level we're looking at within the tree, going from bottom up
-        height = int(math.log(len(arr)-1, 2))+1  # height of tree, ceiling functioned
-
         while (True):
+            height = int(math.log(len(arr)-1, 2))+1  # height of tree, ceiling functioned
+            print(level, height)
             # check for being at a level such that we need to allocate more space in the array
             if level > height:
                     arr += [None] * 2**height
@@ -40,17 +40,18 @@ class OrderedFile(list):
             block_index = int(pos * num_blocks / len(arr))
             start = int(block_index * len(arr) / num_blocks)
             end = int((block_index + 1) * len(arr) / num_blocks)
-            block_element_count = arr._scan(start, end)
+            block_element_count = arr._scan(start, end) + 1  # +1 because we'll insert one
             block_max_elements = end - start
             block_density = block_element_count / block_max_elements
 
             depth = height - level
             max_density = 3/4 + 1/4*depth/height
             min_density = 1/2 - 1/4*depth/height
+            print(block_density, min_density, max_density)
 
             if block_density >= min_density and block_density <= max_density:
                     # yay! we can stop at this level
-                    arr._rewrite(start, end, elem)
+                    arr._rewrite(start, end, elem, pos)
                     return
 
             # in this case, this level isn't good enough and we need to iterate and rewrite at a higher level
@@ -71,31 +72,38 @@ class OrderedFile(list):
     def _num_blocks(arr, level):
             # ceiling function of n/2^level*logn
             n = len(arr)
+            print("n=%s" % n)
             return int((n-1)/(2**level * math.log(n, 2)))+1
 
     # rewrites all elements from i to j-1 to be evenly spread across the interval and return nothing
     # also inserts elem at the specified position while it's rewriting
-    def _rewrite(arr, i, j):
-        count = arr._collapse(i, j)
+    def _rewrite(arr, i, j, elem, pos):
+        count = arr._collapse(i, j, elem, pos)
         arr._even_spread(i, j, count)
 
     # rewrites all elements from i to j-1 to be on the left side of the interval,
     # and returns a count of how many elements it found
-    def _collapse(arr, i, j):
-        openSlots = []
+    # optionally insert elem at pos while collapsing, if you know there's space
+    def _collapse(arr, i, j, elem=None, pos=None):
         count = 0
-        for index in range(i, j):
-            x = arr[index]
-            if x is None:
-                openSlots.append(index)
-            else:
+        readpos = i
+        writepos = i
+        write_values = [] # should only ever have size 0, 1, or 2
+        while ((write_values and writepos < j) or readpos < j):
+            if write_values and readpos > writepos:
+                # write next_value to writepos
+                arr[writepos] = write_values.pop(0)
                 count += 1
-                if len(openSlots) != 0:
-                    newPos = openSlots.pop(0)
-                    arr[newPos] = x
-                    arr[index] = None
-                    openSlots.append(index)
+                writepos += 1
+            else:
+                if elem is not None and pos is not None and readpos == pos:
+                    write_values.append(elem)
+                write_values.append(arr[readpos])
+                readpos += 1
+        if write_values:
+            raise Exception("_collapse: not enough space to insert.")
         return count
+                
 
     # given the elements from i to j-1 are all on the left side of the interval, and there are n of them,
     # rewrite the elements to be evenly spread across the interval and return nothing
