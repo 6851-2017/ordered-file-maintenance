@@ -2,7 +2,11 @@
 
 arr = []
 
-def insert(arr, pos):
+# add the element elem to array arr at position pos, rewriting as needed to make space
+# return nothing; modify input array in place
+def insert(elem, arr, pos):
+	if pos > len(arr):
+		raise ValueError("attempted inserting past the end of the array")
 	pass
 
 # return the number of items between i and j-1 in the array
@@ -17,8 +21,17 @@ def _num_blocks(arr, level):
 	n = len(arr)
 	return int((n-1)/(2**level * math.log(n, 2)))+1
 
+# rewrites all elements from i to j-1 to be evenly spread across the interval and return nothing
+def _rewrite(arr, i, j):
+	# call _collapse and _even_spread
+	pass
+
+# rewrites all elements from i to j-1 to be on the left side of the interval,
+# and returns a count of how many elements it found
+def _collapse(arr, i, j):
+	pass
+
 # given the elements from i to j-1 are all on the left side of the interval, and there are count of them,
 # rewrite the elements to be evenly spread across the interval and return nothing
 def _even_spread(arr, i, j, count):
 	pass
-
