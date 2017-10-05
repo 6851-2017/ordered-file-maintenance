@@ -1,5 +1,7 @@
 # jamb, rusch, nchanda2
 
+import math
+
 arr = []
 
 def read(arr, pos):
@@ -20,7 +22,36 @@ def read(arr, pos):
 def insert(elem, arr, pos):
 	if pos > len(arr):
 		raise ValueError("attempted inserting past the end of the array")
-	pass
+	
+	level = 0  # what level we're looking at within the tree, going from bottom up
+	height = int(math.log(len(arr-1), 2))+1  # height of tree, ceiling functioned
+
+	while (True):
+		# check for being at a level such that we need to allocate more space in the array
+		if level > height:
+			arr += [None] * 2**height
+
+		num_blocks = _num_blocks(arr, level)  
+		# blocklen = len(arr)/num_blocks; blocknum = int(pos/blocklen); start, end = block_index*blocklen, (block_index+1)*blocklen
+		block_index = int(pos * num_blocks / len(arr))
+		start = int(block_index * len(arr) / num_blocks)
+		end = int((block_index + 1) * len(arr) / num_blocks)
+		block_element_count = _scan(arr, start, end)
+		block_max_elements = end - start
+		block_density = block_element_count / block_max_elements
+
+		depth = height - level
+		max_density = 3/4 + 1/4*depth/height
+		min_density = 1/2 - 1/4*depth/height
+
+		if block_density >= min_density and block_density <= max_density:
+			# yay! we can stop at this level
+			_rewrite(arr, start, end)
+			return
+
+		# in this case, this level isn't good enough and we need to iterate and rewrite at a higher level
+		level += 1
+
 
 # return the number of items between i and j-1 in the array
 # also, while scanning, rewrite all elements from i to j-1 to be on the left side of the interval
