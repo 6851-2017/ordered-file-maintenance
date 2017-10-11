@@ -110,7 +110,7 @@ class OrderedFile(list):
     # given the elements from i to j-1 are all on the left side of the interval, and there are n of them,
     # rewrite the elements to be evenly spread across the interval and return nothing
     def _even_spread(arr, i, j, count):
-        oldElems = arr[i:j]
+        oldElems = arr[i:i+count]
         arr[i:j] = [None]*(j-i)
         newIndices = [i + (k*(j-i))/count for k in range(count)]
         for elem, index in zip(oldElems, newIndices):
