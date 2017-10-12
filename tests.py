@@ -12,20 +12,20 @@ class TestOrderedMaintenace(unittest.TestCase):
         self.arr._collapse(0, 8)
         assert(self.arr == [1, 2, 3, 4, None, None, None, None])
 
-    def test_collapse_partial_range(self):
-        print(self.arr)
+    def test_collapse_partial_range1(self):
         self.arr += [1,2, None, 3, None, 4,6,7]
-        print(self.arr)
         self.arr._collapse(0, 5)
-        print(self.arr)
-        assert(self.arr == [1, 2, 3, 4, None, None, None, None])
+        assert(self.arr == [1, 2, None, None, None, 3, None, 4, 6, 7])
 
-    def test_collapse_partial_range(self):
+    def test_collapse_partial_range2(self):
+        self.arr += [1,2, None, 3, None, 4,6,7]
+        self.arr._collapse(5, 10)
+        assert(self.arr == [None, None, 1, 2, None, 3, 4, 6, 7, None])
+
+    def test_collapse_only_nones(self):
         self.arr += [1,2, None, 3, None, 4]
-        print(self.arr)
-        self.arr._collapse(0, 8)
-        print(self.arr)
-        assert(self.arr.read(0) == 1)
+        self.arr._collapse(0, 1)
+        assert(self.arr == [None, None, 1, 2, None, 3, None, 4])
 
     def test_insert_into_empy_arr(self):
         self.arr.insert(1, 0)
