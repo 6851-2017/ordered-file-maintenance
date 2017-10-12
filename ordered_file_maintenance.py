@@ -121,6 +121,6 @@ class OrderedFile(list):
     def _even_spread(arr, i, j, count):
         oldElems = arr[i:i+count]
         arr[i:j] = [None]*(j-i)
-        newIndices = [i + (k*(j-i))/count for k in range(count)]
+        newIndices = [i + (k*(j-i))//count for k in range(count)]
         for elem, index in zip(oldElems, newIndices):
             arr[index] = elem
