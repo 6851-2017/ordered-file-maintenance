@@ -12,7 +12,7 @@ class OrderedFile(list):
         x = 0
         i = 0
         while pos < x:
-            if arr[i]:
+            if arr[i] is not None:
                 x += 1
             i += 1
 
