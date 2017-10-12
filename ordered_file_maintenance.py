@@ -84,6 +84,6 @@ class OrderedFile(list):
         count = len(elems)
         assert count <= j-i
         arr[i:j] = [None]*(j-i)
-        newIndices = [i + (k*(j-i))//count for k in xrange(count)]
+        newIndices = [i + (k*(j-i))//count for k in range(count)]
         for elem, index in zip(elems, newIndices):
             arr[index] = elem
