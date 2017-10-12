@@ -115,6 +115,7 @@ class OrderedFile(list):
 
     def _collapse(arr, i, j, elem, pos, deleting=False):
         interval = (arr[i:pos]+arr[pos+1:j]) if deleting else (arr[i:pos] + [elem] + arr[pos:j])
+        return interval
 
     # rewrites all elements from i to j-1 to be evenly spread across the interval and return nothing
     # also inserts elem at the specified position while it's rewriting
