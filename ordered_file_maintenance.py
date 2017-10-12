@@ -52,7 +52,8 @@ class OrderedFile(list):
 
             if block_density <= max_density:
                 # yay! we can stop at this level
-                arr._rewrite(start, end, elem, pos)
+                interval = arr._collapse(start, end, elem, pos)
+                arr._even_spread(start, end, interval)
                 return
 
             # in this case, this level isn't good enough and we need to iterate and rewrite at a higher level
@@ -70,9 +71,8 @@ class OrderedFile(list):
             print(level, height)
             # check for being at a level such that we need to reduce space in the array
             if level > height:
-                count = arr._rewrite(0, len(arr), None, pos, True)
-                assert(len(arr)//2 >= count)
-                arr._even_spread(0, len(arr)//2, count)
+                interval = arr._collapse(0, len(arr), None, pos, True)
+                arr._even_spread(0, len(arr)//2, interval)
                 arr = arr[0:len(arr)//2]
                 height -= 1
                 return
@@ -93,8 +93,8 @@ class OrderedFile(list):
 
             if block_density >= min_density:
                     # yay! we can stop at this level
-                    count = arr._collapse(start, end, None, pos, True)
-                    arr._even_spread(start, end, count)
+                    interval = arr._collapse(start, end, None, pos, True)
+                    arr._even_spread(start, end, interval)
                     return
 
             # in this case, this level isn't good enough and we need to iterate and rewrite at a higher level
@@ -113,10 +113,12 @@ class OrderedFile(list):
             print("n=%s" % n)
             return int((n-1)/(2**level * math.log(n, 2)))+1
 
+    def _collapse(arr, i, j, elem, pos, deleting=False):
+        interval = (arr[i:pos]+arr[pos+1:j]) if deleting else (arr[i:pos] + [elem] + arr[pos:j])
+
     # rewrites all elements from i to j-1 to be evenly spread across the interval and return nothing
     # also inserts elem at the specified position while it's rewriting
-    def _rewrite(arr, i, j, elem, pos, deleting=False):
-        interval = (arr[i:pos]+arr[pos+1:j]) if deleting else (arr[i:pos] + [elem] + arr[pos:j])
+    def _even_spread(arr, i, j, interval):
         elems = [thing for thing in interval if thing is not None]
         count = len(elems)
         assert count <= j-i
