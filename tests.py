@@ -9,7 +9,9 @@ class TestOrderedMaintenace(unittest.TestCase):
 
     def test_collapse(self):
         self.arr += [1,2, None, 3, None, 4]
+        print(self.arr)
         self.arr._collapse(0, 8)
+        print(self.arr)
         assert(self.arr == [1, 2, 3, 4, None, None, None, None])
 
     def test_collapse_partial_range1(self):
@@ -26,6 +28,16 @@ class TestOrderedMaintenace(unittest.TestCase):
         self.arr += [1,2, None, 3, None, 4]
         self.arr._collapse(0, 1)
         assert(self.arr == [None, None, 1, 2, None, 3, None, 4])
+
+    def test_collapse_insert_at_empty_slot(self):
+        self.arr += [1,2, None, 3, None, 4,6,7]
+        self.arr._collapse(1, 7, elem=100, pos=4)
+        assert(self.arr == [None, 1, 2, 100, 3, None, None, 4, 6, 7])
+
+    def test_collapse_insert_at_used_slot(self):
+        self.arr += [1,2, None, 3, None, 4,6,7]
+        self.arr._collapse(5, 10, elem=100, pos=8)
+        assert(self.arr == [None, None, 1, 2, None, 3, 4, 100, 6, 7])
 
     def test_insert_into_empy_arr(self):
         self.arr.insert(1, 0)

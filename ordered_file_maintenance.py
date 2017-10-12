@@ -88,31 +88,35 @@ class OrderedFile(list):
     def _collapse(arr, i, j, elem=None, pos=None):
         openSlots = []
         count = 0
-        for index in range(i, j):
-            x = arr[index]
-            if x is None:
-                openSlots.append(index)
+        writePos = i
+        readPos = i
+        while readPos < j:
+            readElem = arr[readPos]
+            writeElem = arr[writePos]
             #insert new elem if it exists
-            elif pos == index and elem is not None:
+            if pos == readPos and elem is not None:
+                print("here")
                 count +=1
                 #if there is an open slot, put elem in
-                if len(openSlots) != 0:
-                    newPos = openSlots.pop(0)
-                    arr[newPos] = elem
+                if writeElem is None:
+                    arr[writePos] = elem
+                    writePos += 1
+                    elem = None
                 #otherwise kick out whatever was in this slot and insert elem
                 #the previous element in the slot will be examined on the next loop
                 else:
-                    temp = elem
-                    elem = arr[index]
-                    arr[index] = temp
+                    elem = readElem
                     pos += 1
+                    writePos += 1
+                    readPos += 1
+                    print(elem)
             else:
-                count += 1
-                if len(openSlots) != 0:
-                    newPos = openSlots.pop(0)
-                    arr[newPos] = x
-                    arr[index] = None
-                    openSlots.append(index)
+                if readElem != None:
+                    count += 1
+                    arr[readPos] = None
+                    arr[writePos] = readElem
+                    writePos += 1
+                readPos += 1
         return count
 
 
