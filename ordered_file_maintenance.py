@@ -11,7 +11,7 @@ class OrderedFile(list):
     def read(arr, pos):
         x = 0
         i = 0
-        while pos < x:
+        while pos >= x:
             if arr[i] is not None:
                 x += 1
             i += 1
@@ -19,7 +19,7 @@ class OrderedFile(list):
             if i > len(arr):
                 raise Exception("Index not present")
 
-        return arr[x]
+        return arr[i-1]
 
     # add the element elem to the array at position pos, rewriting as needed to make space
     # return nothing; modify the array in place
@@ -50,10 +50,10 @@ class OrderedFile(list):
             min_density = 1/2 - 1/4*depth/height
             print(block_density, min_density, max_density)
 
-            if block_density >= min_density and block_density <= max_density:
-                    # yay! we can stop at this level
-                    arr._rewrite(start, end, elem, pos)
-                    return
+            if block_density <= max_density:
+                # yay! we can stop at this level
+                arr._rewrite(start, end, elem, pos)
+                return
 
             # in this case, this level isn't good enough and we need to iterate and rewrite at a higher level
             level += 1
@@ -116,51 +116,14 @@ class OrderedFile(list):
     # rewrites all elements from i to j-1 to be evenly spread across the interval and return nothing
     # also inserts elem at the specified position while it's rewriting
     def _rewrite(arr, i, j, elem, pos, deleting=False):
-        count = arr._collapse(i, j, elem, pos, deleting)
-        arr._even_spread(i, j, count)
-
-    # rewrites all elements from i to j-1 to be on the left side of the interval,
-    # and returns a count of how many elements it found
-    # optionally insert elem at pos while collapsing, if you know there's space
-    def _collapse(arr, i, j, elem=None, pos=None, deleting=False):
-        openSlots = []
-        count = 0
-        for index in range(i, j):
-            #delete elem if applicable
-            if pos == index and deleting:
-                arr[index] = None
-            x = arr[index]
-            if x is None:
-                openSlots.append(index)
-            #insert new elem if it exists
-            elif pos == index and elem is not None and not deleting:
-                count +=1
-                #if there is an open slot, put elem in
-                if len(openSlots) != 0:
-                    newPos = openSlots.pop(0)
-                    arr[newPos] = elem
-                #otherwise kick out whatever was in this slot and insert elem
-                #the previous element in the slot will be examined on the next loop
-                else:
-                    temp = elem
-                    elem = arr[index]
-                    arr[index] = temp
-                    pos += 1
-            else:
-                count += 1
-                if len(openSlots) != 0:
-                    newPos = openSlots.pop(0)
-                    arr[newPos] = x
-                    arr[index] = None
-                    openSlots.append(index)
-        return count
-
-
-    # given the elements from i to j-1 are all on the left side of the interval, and there are n of them,
-    # rewrite the elements to be evenly spread across the interval and return nothing
-    def _even_spread(arr, i, j, count):
-        oldElems = arr[i:i+count]
+        interval = (arr[i:pos]+arr[pos+1:j]) if deleting else (arr[i:pos] + [elem] + arr[pos:j])
+        elems = [thing for thing in interval if thing is not None]
+        count = len(elems)
+        assert count <= j-i
         arr[i:j] = [None]*(j-i)
-        newIndices = [i + (k*(j-i))//count for k in range(count)]
-        for elem, index in zip(oldElems, newIndices):
+        newIndices = [i + (k*(j-i))//count for k in xrange(count)]
+        for elem, index in zip(elems, newIndices):
             arr[index] = elem
+
+
+    
