@@ -86,26 +86,35 @@ class OrderedFile(list):
     # and returns a count of how many elements it found
     # optionally insert elem at pos while collapsing, if you know there's space
     def _collapse(arr, i, j, elem=None, pos=None):
+        openSlots = []
         count = 0
-        readpos = i
-        writepos = i
-        write_values = [] # should only ever have size 0, 1, or 2
-        while ((write_values and writepos < j) or readpos < j):
-            if write_values and readpos > writepos:
-                # write next_value to writepos
-                arr[writepos] = write_values.pop(0)
-                count += 1
-                writepos += 1
+        for index in range(i, j):
+            x = arr[index]
+            if x is None:
+                openSlots.append(index)
+            #insert new elem if it exists
+            elif pos == index and elem is not None:
+                count +=1
+                #if there is an open slot, put elem in
+                if len(openSlots) != 0:
+                    newPos = openSlots.pop(0)
+                    arr[newPos] = elem
+                #otherwise kick out whatever was in this slot and insert elem
+                #the previous element in the slot will be examined on the next loop
+                else:
+                    temp = elem
+                    elem = arr[index]
+                    arr[index] = temp
+                    pos += 1
             else:
-                if elem is not None and pos is not None and readpos == pos:
-                    write_values.append(elem)
-                if arr[readpos] is not None:
-                    write_values.append(arr[readpos])
-                readpos += 1
-        if write_values:
-            raise Exception("_collapse: not enough space to insert.")
+                count += 1
+                if len(openSlots) != 0:
+                    newPos = openSlots.pop(0)
+                    arr[newPos] = x
+                    arr[index] = None
+                    openSlots.append(index)
         return count
-                
+
 
     # given the elements from i to j-1 are all on the left side of the interval, and there are n of them,
     # rewrite the elements to be evenly spread across the interval and return nothing
