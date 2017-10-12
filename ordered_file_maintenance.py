@@ -11,7 +11,7 @@ class OrderedFile(list):
     def read(arr, pos):
         x = 0
         i = 0
-        while pos < x:
+        while pos >= x:
             if arr[i] is not None:
                 x += 1
             i += 1
@@ -19,7 +19,7 @@ class OrderedFile(list):
             if i > len(arr):
                 raise Exception("Index not present")
 
-        return arr[x]
+        return arr[i-1]
 
     # add the element elem to the array at position pos, rewriting as needed to make space
     # return nothing; modify the array in place
