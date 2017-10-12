@@ -61,7 +61,44 @@ class OrderedFile(list):
     # remove the element from the array at the given position
     # return nothing; modify the array in place
     def delete(arr, pos):
-        pass
+        if pos > len(arr):
+            raise ValueError("attempted deleting past the end of the array")
+
+        level = 0  # what level we're looking at within the tree, going from bottom up
+        while (True):
+            height = int(math.log(len(arr)-1, 2))+1  # height of tree, ceiling functioned
+            print(level, height)
+            # check for being at a level such that we need to reduce space in the array
+            if level > height:
+                count = arr._rewrite(0, len(arr), None, pos, True)
+                assert(len(arr)//2 >= count)
+                arr._even_spread(0, len(arr)//2, count)
+                arr = arr[0:len(arr)//2]
+                height -= 1
+                return
+
+            num_blocks = arr._num_blocks(level)
+            # blocklen = len(arr)/num_blocks; blocknum = int(pos/blocklen); start, end = block_index*blocklen, (block_index+1)*blocklen
+            block_index = int(pos * num_blocks / len(arr))
+            start = int(block_index * len(arr) / num_blocks)
+            end = int((block_index + 1) * len(arr) / num_blocks)
+            block_element_count = arr._scan(start, end) - 1  # +1 because we'll delete one
+            block_max_elements = end - start
+            block_density = block_element_count / block_max_elements
+
+            depth = height - level
+            max_density = 3/4 + 1/4*depth/height
+            min_density = 1/2 - 1/4*depth/height
+            print(block_density, min_density, max_density)
+
+            if block_density >= min_density:
+                    # yay! we can stop at this level
+                    count = arr._collapse(start, end, None, pos, True)
+                    arr._even_spread(start, end, count)
+                    return
+
+            # in this case, this level isn't good enough and we need to iterate and rewrite at a higher level
+            level += 1
 
     # return the number of items between i and j-1 in the array
     # also, while scanning, rewrite all elements from i to j-1 to be on the left side of the interval
@@ -78,14 +115,14 @@ class OrderedFile(list):
 
     # rewrites all elements from i to j-1 to be evenly spread across the interval and return nothing
     # also inserts elem at the specified position while it's rewriting
-    def _rewrite(arr, i, j, elem, pos):
-        count = arr._collapse(i, j, elem, pos)
+    def _rewrite(arr, i, j, elem, pos, deleting=False):
+        count = arr._collapse(i, j, elem, pos, deleting)
         arr._even_spread(i, j, count)
 
     # rewrites all elements from i to j-1 to be on the left side of the interval,
     # and returns a count of how many elements it found
     # optionally insert elem at pos while collapsing, if you know there's space
-    def _collapse(arr, i, j, elem=None, pos=None):
+    def _collapse(arr, i, j, elem=None, pos=None, deleting=False):
         openSlots = []
         count = 0
         for index in range(i, j):
