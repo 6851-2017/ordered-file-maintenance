@@ -126,11 +126,14 @@ class OrderedFile(list):
         openSlots = []
         count = 0
         for index in range(i, j):
+            #delete elem if applicable
+            if pos == index and deleting:
+                arr[index] = None
             x = arr[index]
             if x is None:
                 openSlots.append(index)
             #insert new elem if it exists
-            elif pos == index and elem is not None:
+            elif pos == index and elem is not None and not deleting:
                 count +=1
                 #if there is an open slot, put elem in
                 if len(openSlots) != 0:
