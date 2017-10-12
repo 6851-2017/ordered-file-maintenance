@@ -92,10 +92,10 @@ class OrderedFile(list):
             print(block_density, min_density, max_density)
 
             if block_density >= min_density:
-                    # yay! we can stop at this level
-                    interval = arr._collapse(start, end, None, pos, True)
-                    arr._even_spread(start, end, interval)
-                    return
+                # yay! we can stop at this level
+                interval = arr._collapse(start, end, None, pos, True)
+                arr._even_spread(start, end, interval)
+                return
 
             # in this case, this level isn't good enough and we need to iterate and rewrite at a higher level
             level += 1
@@ -103,15 +103,15 @@ class OrderedFile(list):
     # return the number of items between i and j-1 in the array
     # also, while scanning, rewrite all elements from i to j-1 to be on the left side of the interval
     def _scan(arr, i, j):
-            return len([x for x in arr[i:j] if x is not None])
+        return len([x for x in arr[i:j] if x is not None])
 
     # given the level up the tree we're at, we have 2^level * log(n) things in a block
     # returns how many blocks there are in the tree at that level
     def _num_blocks(arr, level):
-            # ceiling function of n/2^level*logn
-            n = len(arr)
-            print("n=%s" % n)
-            return int((n-1)/(2**level * math.log(n, 2)))+1
+        # ceiling function of n/2^level*logn
+        n = len(arr)
+        print("n=%s" % n)
+        return int((n-1)/(2**level * math.log(n, 2)))+1
 
     def _collapse(arr, i, j, elem, pos, deleting=False):
         interval = (arr[i:pos]+arr[pos+1:j]) if deleting else (arr[i:pos] + [elem] + arr[pos:j])
