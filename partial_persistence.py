@@ -1,7 +1,7 @@
 # jamb, rusch 6.851 Fall 2017
 
 
-p = 5  # max number of pointers allowed to any object
+p = 3  # max number of pointers allowed to any object
 
 class PartiallyPersistentPointerPackage():
     '''Has a list of Nodes, each of which is partially persistent and has
@@ -17,6 +17,7 @@ class PartiallyPersistentPointerPackage():
 # TODOs:
 # how do we handle lookups for things before the version of the current base node?
 # do reverse_pointers ever get deleted if the thing no longer references this node?
+# update reverse_pointers from other things based on this thing's forward pointers
 
 class Node():
     '''A partially persistent DS node; stores fields, reverse pointers, mods.'''
@@ -28,17 +29,29 @@ class Node():
         self.reverse_pointers = []  # reverse_pointer stores (node, field name) where this node is referenced
         self.mods = []  # mod is a tuple of (version, field, value)
 
+    def formatted(self):
+        s = "PARENT: " + str(self.parent) + "\n"
+        s += "FIELDS:\n"
+        for f in self.fields.keys():
+            s += "\t" + f + ": " + str(self.fields.get(f)) +"\n"
+        s += "REVERSE POINTERS:\n"
+        for (n, f) in self.reverse_pointers:
+            s += "\t<NODE> field " + f +"\n"
+        s += "MODS:\n"
+        for (vers, f, val) in self.mods:
+            s += "\tVersion " + str(vers) + ", field " + f + ", value " + str(val) + "\n"
+        return s
+
     # copy constructor, but turns mods directly into changing fields and has empty mods
     # also goes through reverse pointers and sends them to itself
-    def __init__(self, node, parent):
-        self.parent = parent
+    @classmethod
+    def from_node(self, node):
+        self.parent = node.parent
         self.fields = node.fields.copy()
         for _, name, val in node.mods:
-            assert name in self.fields.keys()
             self.fields[name] = val
         self.mods = []
         for from_node, field_name in node.reverse_pointers:
-            assert field_name in from_node.fields.keys()
             from_node.fields[field_name] = self
         self.reverse_pointers = node.reverse_pointers
 
@@ -53,10 +66,11 @@ class Node():
     # modify a field value (add a mod if not full, create new node if it is)
     def set_field(self, name, value):
         self.increment_version()
-        if len(self.mods) >= p:
-            n = Node(self, parent)
-        else:
-            self.mods.append((self.get_version(), name, value))
+        self.mods.append((self.get_version(), name, value))
+        if type(value) is Node:
+            value.add_reverse_pointer(self, name)
+        if len(self.mods) >= 2*p:
+            n = Node.from_node(self)
 
     # add reverse pointer, check if there are more than p of them
     def add_reverse_pointer(self, from_node, field_name):
@@ -72,4 +86,20 @@ class Node():
             if mod[1] == name and mod[0] <= version:
                 return mod[2]
         return self.fields.get(name)
-    
+
+
+# TESTING
+P4 = PartiallyPersistentPointerPackage()
+n0 = Node(P4)
+n1 = Node(P4)
+n2 = Node(P4)
+n3 = Node(P4)
+n4 = Node(P4)
+n0.set_field("ptr", 5)
+n0.set_field("val", 5)
+n0.set_field("ptr", n1)
+n0.set_field("foo", "bar")
+n2.set_field("ptr", n1)
+n2.set_field("ptr", n0)
+n0.set_field("ptr", n2)
+n0.set_field("foo", "foobar")
