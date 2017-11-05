@@ -14,6 +14,10 @@ class PartiallyPersistentPointerPackage():
         self.nodes.append(node)
 
 
+# TODOs:
+# how do we handle lookups for things before the version of the current base node?
+# do reverse_pointers ever get deleted if the thing no longer references this node?
+
 class Node():
     '''A partially persistent DS node; stores fields, reverse pointers, mods.'''
 
@@ -21,13 +25,22 @@ class Node():
     def __init__(self, parent):
         self.parent = parent  # the PPPP that this node is in, for version tracking
         self.fields = {}  # map field name to value (value is probably a pointer)
-        self.reverse_pointers = []  # reverse_pointer stores node and field name where this node is referenced
+        self.reverse_pointers = []  # reverse_pointer stores (node, field name) where this node is referenced
         self.mods = []  # mod is a tuple of (version, field, value)
 
     # copy constructor, but turns mods directly into changing fields and has empty mods
     # also goes through reverse pointers and sends them to itself
     def __init__(self, node, parent):
-        pass
+        self.parent = parent
+        self.fields = node.fields.copy()
+        for _, name, val in node.mods:
+            assert name in self.fields.keys()
+            self.fields[name] = val
+        self.mods = []
+        for from_node, field_name in node.reverse_pointers:
+            assert field_name in from_node.fields.keys()
+            from_node.fields[field_name] = self
+        self.reverse_pointers = node.reverse_pointers
 
     # find the current version
     def get_version(self):
@@ -47,9 +60,16 @@ class Node():
 
     # add reverse pointer, check if there are more than p of them
     def add_reverse_pointer(self, from_node, field_name):
-        pass
+        self.reverse_pointers.append((from_node, field_name))
+        assert len(self.reverse_pointers) <= p
 
     # retrieve the value of the field at the given version (by default, current)
+    # returns None if it's not in the fields or mods
     def get_field(self, name, version=None):
-        pass
+        if version is None:
+            version = self.get_version()
+        for mod in self.mods[::-1]:
+            if mod[1] == name and mod[0] <= version:
+                return mod[2]
+        return self.fields.get(name)
     
