@@ -30,7 +30,7 @@ class OrderedFile(list):
         level = 0  # what level we're looking at within the tree, going from bottom up
         while (True):
             height = int(math.log(len(arr)-1, 2))+1  # height of tree, ceiling functioned
-            print(level, height)
+            #print(level, height)
             # check for being at a level such that we need to allocate more space in the array
             if level > height:
                 arr += [None] * 2**height
@@ -48,7 +48,7 @@ class OrderedFile(list):
             depth = height - level
             max_density = 3/4 + 1/4*depth/height
             min_density = 1/2 - 1/4*depth/height
-            print(block_density, min_density, max_density)
+            #print(block_density, min_density, max_density)
 
             if block_density <= max_density:
                 # yay! we can stop at this level
@@ -68,7 +68,7 @@ class OrderedFile(list):
         level = 0  # what level we're looking at within the tree, going from bottom up
         while (True):
             height = int(math.log(len(arr)-1, 2))+1  # height of tree, ceiling functioned
-            print(level, height)
+            # print(level, height)
             # check for being at a level such that we need to reduce space in the array
             if level > height:
                 interval = arr._collapse(0, len(arr), None, pos, True)
@@ -89,7 +89,7 @@ class OrderedFile(list):
             depth = height - level
             max_density = 3/4 + 1/4*depth/height
             min_density = 1/2 - 1/4*depth/height
-            print(block_density, min_density, max_density)
+            #print(block_density, min_density, max_density)
 
             if block_density >= min_density:
                 # yay! we can stop at this level
@@ -110,10 +110,11 @@ class OrderedFile(list):
     def _num_blocks(arr, level):
         # ceiling function of n/2^level*logn
         n = len(arr)
-        print("n=%s" % n)
+        #print("n=%s" % n)
         return int((n-1)/(2**level * math.log(n, 2)))+1
 
     def _collapse(arr, i, j, elem, pos, deleting=False):
+        j = min(j, len(arr))
         interval = (arr[i:pos]+arr[pos+1:j]) if deleting else (arr[i:pos] + [elem] + arr[pos:j])
         return interval
 
