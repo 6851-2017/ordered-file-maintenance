@@ -66,7 +66,7 @@ class Node():
                 val.remove_reverse_pointer(node, name)
                 val.add_reverse_pointer(new_node, name)
         for from_node, field_name in node.get_revptrs():
-            from_node.set_field(field_name, new_node)
+            from_node.set_field(field_name, new_node, new_version=False)
         return new_node
 
     # find the current version
@@ -79,14 +79,15 @@ class Node():
 
     # modify a field value (add a mod if not full, create new node if it is)
     # NOTE: must set the X equal to the thing returned by X.set_field()
-    def set_field(self, name, value):
+    def set_field(self, name, value, new_version=True):
         if len(self.mods) >= 2*p or not self.is_active:
             raise Exception("Shouldn't be adding more fields to already-full thing.")
-        self.increment_version()
+        if new_version:
+            self.increment_version()
         old_value = self.get_field(name)
         self.mods.append((self.get_version(), name, value))
         
-        # fix reverse pointers
+        # update reverse pointers
         if type(old_value) is Node:
             old_value.remove_reverse_pointer(self, name)
         if type(value) is Node:
@@ -109,7 +110,7 @@ class Node():
             revptrs = list(self.get_revptrs())
             revptrs.append((from_node, field_name))
             assert len(revptrs) <= p
-            self.set_field("__REVERSE_PTRS__", revptrs)
+            self.set_field("__REVERSE_PTRS__", revptrs, new_version=False)
 
     # remove reverse pointer
     # if node isn't active, no point adding, since there's no space to and any queries will be before then
@@ -117,7 +118,7 @@ class Node():
         if self.is_active:
             revptrs = list(self.get_revptrs())
             revptrs.remove((from_node, field_name))
-            self.set_field("__REVERSE_PTRS__", revptrs)
+            self.set_field("__REVERSE_PTRS__", revptrs, new_version=False)
 
     # retrieve the value of the field at the given version (by default, current)
     # returns None if it's not in the fields or mods
@@ -135,8 +136,6 @@ P4 = PartiallyPersistentPointerPackage()
 n0 = Node("n0", P4)
 n1 = Node("n1", P4)
 n2 = Node("n2", P4)
-n3 = Node("n3", P4)
-n4 = Node("n4", P4)
 n0 = n0.set_field("ptr", 5)
 n0 = n0.set_field("val", 5)
 n0 = n0.set_field("ptr", n1)

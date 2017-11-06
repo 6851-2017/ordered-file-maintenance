@@ -113,6 +113,9 @@ class OrderedFile(list):
         #print("n=%s" % n)
         return int((n-1)/(2**level * math.log(n, 2)))+1
 
+    # collapse the interval from i to j, clumping elements to the left of it
+    # if j > len(arr), just go to end of array
+    # meanwhile insert (or delete if deleting) elem at pos
     def _collapse(arr, i, j, elem, pos, deleting=False):
         j = min(j, len(arr))
         interval = (arr[i:pos]+arr[pos+1:j]) if deleting else (arr[i:pos] + [elem] + arr[pos:j])
