@@ -16,6 +16,7 @@ class PartiallyPersistentPointerPackage():
 
 # TODOs:
 # how do we handle lookups for things before the version of the current base node?
+# make it so all edits that happen because of each other are at same version #
 
 class Node():
     '''A partially persistent DS node; stores fields, reverse pointers, mods.'''
@@ -28,6 +29,7 @@ class Node():
         # reverse_pointers is a list that stores (node, field name) where this node is referenced
         self.fields[("__REVERSE_PTRS__")] = []
         self.mods = []  # mod is a tuple of (version, field, value)
+        self.is_active = True  # becomes False once it fills and creates a new active node
 
     def __str__(self):
         return self.name
@@ -43,7 +45,10 @@ class Node():
 ##            s += "\t" + "node " + str(n) + ", field " + f +"\n"
         s += "MODS:\n"
         for (vers, f, val) in self.mods:
-            s += "\tVersion " + str(vers) + ", field " + f + ", value " + str(val) + "\n"
+            if f == "__REVERSE_PTRS__":
+                s += "\tVersion " + str(vers) + ", field " + f + ", value " + str([(str(x[0]), str(x[1])) for x in val]) + "\n"
+            else:
+                s += "\tVersion " + str(vers) + ", field " + f + ", value " + str(val) + "\n"
         return s
 
     # copy constructor, but turns mods directly into changing fields and has empty mods
@@ -55,9 +60,11 @@ class Node():
         new_node.fields = node.fields.copy()
         for _, name, val in node.mods:
             new_node.fields[name] = val
+        for name in new_node.fields.keys():
+            val = new_node.fields[name]
             if type(val) is Node:
-                val.remove_reverse_pointer((node, name))
-                val.add_reverse_pointer((new_node, name))
+                val.remove_reverse_pointer(node, name)
+                val.add_reverse_pointer(new_node, name)
         for from_node, field_name in node.get_revptrs():
             from_node.set_field(field_name, new_node)
         return new_node
@@ -71,33 +78,46 @@ class Node():
         self.parent.version += 1
 
     # modify a field value (add a mod if not full, create new node if it is)
+    # NOTE: must set the X equal to the thing returned by X.set_field()
     def set_field(self, name, value):
+        if len(self.mods) >= 2*p or not self.is_active:
+            raise Exception("Shouldn't be adding more fields to already-full thing.")
         self.increment_version()
         old_value = self.get_field(name)
         self.mods.append((self.get_version(), name, value))
+        
         # fix reverse pointers
-        if type(value) is Node:
-            value.add_reverse_pointer(self, name)
         if type(old_value) is Node:
             old_value.remove_reverse_pointer(self, name)
-        if len(self.mods) >= 2*p:
+        if type(value) is Node:
+            value.add_reverse_pointer(self, name)
+        
+        if len(self.mods) == 2*p:
+            self.is_active = False
             n = Node.from_node(self)
+            return n
+        return self
 
+    # return a list of reverse pointers
     def get_revptrs(self):
         return self.get_field("__REVERSE_PTRS__")
 
     # add reverse pointer, check if there are more than p of them
+    # if node isn't active, no point adding, since there's no space to and any queries will be before then
     def add_reverse_pointer(self, from_node, field_name):
-        revptrs = list(self.get_revptrs())
-        revptrs.append((from_node, field_name))
-        assert len(revptrs) <= p
-        self.set_field("__REVERSE_PTRS__", revptrs)
+        if self.is_active:
+            revptrs = list(self.get_revptrs())
+            revptrs.append((from_node, field_name))
+            assert len(revptrs) <= p
+            self.set_field("__REVERSE_PTRS__", revptrs)
 
     # remove reverse pointer
+    # if node isn't active, no point adding, since there's no space to and any queries will be before then
     def remove_reverse_pointer(self, from_node, field_name):
-        revptrs = list(self.get_revptrs())
-        revptrs.remove((from_node, field_name))
-        self.set_field("__REVERSE_PTRS__", revptrs)
+        if self.is_active:
+            revptrs = list(self.get_revptrs())
+            revptrs.remove((from_node, field_name))
+            self.set_field("__REVERSE_PTRS__", revptrs)
 
     # retrieve the value of the field at the given version (by default, current)
     # returns None if it's not in the fields or mods
@@ -117,14 +137,15 @@ n1 = Node("n1", P4)
 n2 = Node("n2", P4)
 n3 = Node("n3", P4)
 n4 = Node("n4", P4)
-n0.set_field("ptr", 5)
-n0.set_field("val", 5)
-n0.set_field("ptr", n1)
-n0.set_field("foo", "bar")
-n2.set_field("ptr", n1)
+n0 = n0.set_field("ptr", 5)
+n0 = n0.set_field("val", 5)
+n0 = n0.set_field("ptr", n1)
+n0 = n0.set_field("foo", "bar")
+n2 = n2.set_field("ptr", n1)
 print(n1.formatted())  # should have 2 back pointers
-n2.set_field("ptr", n0)
-n0.set_field("ptr", n2)
-n0.set_field("foo", "foobar")
+n2 = n2.set_field("ptr", n0)
+print(n0.formatted())  # should have 0 back pointers
+n0 = n0.set_field("ptr", n2)
+n0 = n0.set_field("foo", "foobar")
 print(n1.formatted())  # now should have 0 back pointers
-print(n2.get_field("ptr").formatted())  # should be a new n0 thing, not the original one
+print(n0.formatted())
