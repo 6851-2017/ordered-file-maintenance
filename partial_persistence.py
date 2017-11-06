@@ -16,7 +16,6 @@ class PartiallyPersistentPointerPackage():
 
 # TODOs:
 # how do we handle lookups for things before the version of the current base node?
-# do reverse_pointers ever get deleted if the thing no longer references this node?
 # update reverse_pointers from other things based on this thing's forward pointers
 
 class Node():
@@ -27,7 +26,8 @@ class Node():
         self.name = name
         self.parent = parent  # the PPPP that this node is in, for version tracking
         self.fields = {}  # map field name to value (value is probably a pointer)
-        self.reverse_pointers = []  # reverse_pointer stores (node, field name) where this node is referenced
+        # reverse_pointers is a list that stores (node, field name) where this node is referenced
+        self.fields[("__REVERSE_PTRS__")] = []
         self.mods = []  # mod is a tuple of (version, field, value)
 
     def __str__(self):
@@ -39,9 +39,9 @@ class Node():
         s += "FIELDS:\n"
         for f in self.fields.keys():
             s += "\t" + f + ": " + str(self.fields.get(f)) +"\n"
-        s += "REVERSE POINTERS:\n"
-        for (n, f) in self.reverse_pointers:
-            s += "\t" + "node " + str(n) + ", field " + f +"\n"
+##        s += "REVERSE POINTERS:\n"
+##        for (n, f) in self.get_revptrs():
+##            s += "\t" + "node " + str(n) + ", field " + f +"\n"
         s += "MODS:\n"
         for (vers, f, val) in self.mods:
             s += "\tVersion " + str(vers) + ", field " + f + ", value " + str(val) + "\n"
@@ -56,9 +56,8 @@ class Node():
         new_node.fields = node.fields.copy()
         for _, name, val in node.mods:
             new_node.fields[name] = val
-        for from_node, field_name in node.reverse_pointers:
+        for from_node, field_name in node.get_revptrs():
             from_node.set_field(field_name, new_node)
-        new_node.reverse_pointers = node.reverse_pointers
         return new_node
 
     # find the current version
@@ -82,14 +81,21 @@ class Node():
         if len(self.mods) >= 2*p:
             n = Node.from_node(self)
 
+    def get_revptrs(self):
+        return self.get_field("__REVERSE_PTRS__")
+
     # add reverse pointer, check if there are more than p of them
     def add_reverse_pointer(self, from_node, field_name):
-        self.reverse_pointers.append((from_node, field_name))
-        assert len(self.reverse_pointers) <= p
+        revptrs = list(self.get_revptrs())
+        revptrs.append((from_node, field_name))
+        assert len(revptrs) <= p
+        self.set_field("__REVERSE_PTRS__", revptrs)
 
     # remove reverse pointer
     def remove_reverse_pointer(self, from_node, field_name):
-        self.reverse_pointers.remove((from_node, field_name))
+        revptrs = list(self.get_revptrs())
+        revptrs.remove((from_node, field_name))
+        self.set_field("__REVERSE_PTRS__", revptrs)
 
     # retrieve the value of the field at the given version (by default, current)
     # returns None if it's not in the fields or mods
@@ -114,8 +120,9 @@ n0.set_field("val", 5)
 n0.set_field("ptr", n1)
 n0.set_field("foo", "bar")
 n2.set_field("ptr", n1)
-print(n1.formatted())
+print(n1.formatted())  # should have 2 back pointers
 n2.set_field("ptr", n0)
 n0.set_field("ptr", n2)
 n0.set_field("foo", "foobar")
-print(n1.formatted())
+print(n1.formatted())  # now should have 0 back pointers
+print(n2.get_field("ptr").formatted())  # should be a new n0 thing, not the original one
