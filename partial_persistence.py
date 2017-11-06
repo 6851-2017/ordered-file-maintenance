@@ -16,7 +16,6 @@ class PartiallyPersistentPointerPackage():
 
 # TODOs:
 # how do we handle lookups for things before the version of the current base node?
-# update reverse_pointers from other things based on this thing's forward pointers
 
 class Node():
     '''A partially persistent DS node; stores fields, reverse pointers, mods.'''
@@ -56,6 +55,9 @@ class Node():
         new_node.fields = node.fields.copy()
         for _, name, val in node.mods:
             new_node.fields[name] = val
+            if type(val) is Node:
+                val.remove_reverse_pointer((node, name))
+                val.add_reverse_pointer((new_node, name))
         for from_node, field_name in node.get_revptrs():
             from_node.set_field(field_name, new_node)
         return new_node
