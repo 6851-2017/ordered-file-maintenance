@@ -1,0 +1,46 @@
+
+callbacks - call whenever you move an item (-Erik)
+- callback for file: did the finger move? if so update stored finger index
+- callback for building DSs on top of this: did any of a set of pointers into the DS move? if so update
+- callback for performance: do nothing
+
+Need:
+    O(1) insert items after other specified items
+    check if item S precedes item T
+    store nodes for begin and end of each version -> 2n nodes, each has a finger, hash table index->{fingers}
+
+API:
+constructor OFM (callback=None)   # makes an OFM object, will call callback upon each insert/delete
+
+
+
+
+
+
+
+Notes from talking to classmates
+
+Kliment
+
+        Instead of insert and delete one op for both. Insert a non thing for delete. Insert a none. Shrinks done code.
+
+	Output to the user all of the elements without the nones. 
+
+	When the user gives you an insert position how to do the position that they see? Probably can’t do that. 
+
+	Biggest problem with OFM is that the user gives you an index in your area and then the you insert it, but then you might need to rebalance which could change the location of the thing you put in. 
+
+	Did not implement the delete check if too none
+
+	_________________________
+
+
+Wheatman
+
+	Haven’t had a ton of time to do that (Make everything actually work). Performance goal. 
+
+	API will be basically will be pointer to thing, loop over the thing, get the next item, given some item that you have a pointer to, insert something directly before it or after, delete the node that you already have a pointer to, basically given some node get the next node, find the max of all the nodes for testing
+
+	Time for testing, time for delete, try different access methods
+
+	If insert after, cannot insert at the beginning. Will need flag or null element in the beginning. 
