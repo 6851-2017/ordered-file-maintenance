@@ -119,6 +119,15 @@ set_field
         self.assertEqual(n0.get_field("ptr1"), n1)
         self.assertEqual(len(n0.mods), 3)
 
+    def test_cycle_of_death(self):
+        n0 = Node("n0", self.P4)
+        n1 = Node("n1", self.P4)
+        for i in range(p):
+            n0 = n0.set_field("ptr"+str(i), n1)
+            n1 = n1.set_field("ptr"+str(i), n0)
+            print(n0.formatted())
+        self.assertEqual(n0.get_field("ptr0"), n1)
+
 if __name__ == '__main__':
     test_suite = TestPartialPersistence
     unittest.main()

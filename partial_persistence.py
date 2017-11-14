@@ -76,18 +76,20 @@ class Node():
             self._increment_version()
         old_value = self.get_field(name)
         self.mods.append((self._get_version(), name, value))
+
+        node = self
+        # overflow if needed
+        if len(node.mods) >= 2*p:
+            node.is_active = False
+            node = Node._from_node(self)
         
         # update reverse pointers
         if type(old_value) is Node:
-            old_value._remove_reverse_pointer(self, name)
+            old_value._remove_reverse_pointer(node, name)
         if type(value) is Node:
-            value._add_reverse_pointer(self, name)
+            value._add_reverse_pointer(node, name)
         
-        if len(self.mods) == 2*p:
-            self.is_active = False
-            n = Node._from_node(self)
-            return n
-        return self
+        return node
 
 
     # PRIVATE METHODS
