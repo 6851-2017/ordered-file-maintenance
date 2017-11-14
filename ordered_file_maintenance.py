@@ -27,6 +27,14 @@ class FilePointer:
     def read_at_finger(self):
         return self.OFM.read(self.index)
 
+    def increment_finger(self):
+        self.index = self.OFM.get_next(self.index)
+        return
+
+    def decrement_finger(self):
+        self.index = self.OFM.get_previous(self.index)
+        return
+
     def insert_after(self, elem):
         self.OFM.insert(elem, self.index)
         return
@@ -72,11 +80,25 @@ class OrderedFile(list):
             raise ValueError("Attempted to read at position where there is no value.")
         return arr[pos]
 
-    # TODO
     # given a position, scan forward O(1) to find the next non-empty element (not-including-this-one);
-    # should function like an iterator into the file being represented
+    # should be sort of like an iterator into the file being represented
     def get_next(arr, pos):
-        pass
+        pos = pos + 1
+        while (pos < len(arr) and arr[pos] is None):
+            pos = pos + 1
+        if pos == len(arr):
+            return None
+        return pos
+
+    # given a position, scan backward O(1) to find the previous non-empty element (not-including-this-one);
+    # should be sort of like a reverse iterator into the file being represented
+    def get_previous(arr, pos):
+        pos = pos - 1
+        while (pos >= 0 and arr[pos] is None):
+            pos = pos - 1
+        if pos < 0:
+            return None
+        return pos
 
     # add the element elem to the array after position pos, rewriting as needed to make space
     # return nothing; modify the array in place
@@ -169,6 +191,9 @@ class OrderedFile(list):
         n = len(arr)
         #print("n=%s" % n)
         return int((n-1)/(2**level * math.log(n, 2)))+1
+
+
+    # TODO write the below two to be in-place and call self.callback on every moved element
 
     # collapse the interval from i to j, clumping elements to the left of it
     # if j > len(arr), just go to end of array
