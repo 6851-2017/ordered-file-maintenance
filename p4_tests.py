@@ -2,13 +2,12 @@ import unittest
 import random
 from partial_persistence import Node
 from partial_persistence import PartiallyPersistentPointerPackage as PPPP
+from partial_persistence import p
 
 class TestPartialPersistence(unittest.TestCase):
 
     def setUp(self):
         self.P4 = PPPP()
-
-
 
     """
 TO TEST:
@@ -26,9 +25,7 @@ set_field
     value = None, integer, boolean, string, other node object
     set on starter node with no mods, starter node with mods,
         node freshly copied, node copied and with mods, node copied > 1 time
-
-
-
+    set to point at itself
     """
 
     def test_init_and_str(self):
@@ -60,21 +57,67 @@ set_field
         self.assertEqual(n0.get_field("value"), None)
         self.assertEqual(n0.get_field("val"), True)
 
-
-    # TODO: field that points to other node object; overflow nodes with and without mods; multi overflows
     def test_get_set_overflow(self):
-        pass
+        # overflow nodes with and without mods
+        n0 = Node("n0", self.P4)
+        n0 = n0.set_field("val", -1)
+        n0 = n0.set_field("truth", True)
+        for i in range(2*p-2):
+            n0 = n0.set_field("val", i)
+        self.assertEqual(n0.get_field("val"), 2*p-3)
+        for i in range(2*p-2, 2*p):
+            n0 = n0.set_field("val", i)
+        self.assertEqual(n0.get_field("val"), 2*p-1)
+        self.assertEqual(len(n0.mods), 2)
+        self.assertEqual(n0.get_field("val", 0), 2*p-3)
 
     def test_get_set_overflow_multiple(self):
-        pass
+        n0 = Node("n0", self.P4)
+        for i in range(4*p+1):
+            n0 = n0.set_field("val", i)
+        self.assertEqual(n0.get_field("val"), 4*p)
+        self.assertEqual(len(n0.mods), 1)
 
     def test_get_set_node_fields(self):
         # set, unset, check all the pointer chasing
-        pass
-
+        n0 = Node("n0", self.P4)
+        n1 = Node("n1", self.P4)
+        n2 = Node("n2", self.P4)
+        n0 = n0.set_field("val", -1)
+        n0 = n0.set_field("ptr0", n1)
+        n1 = n1.set_field("ptr1", n2)
+        n2 = n2.set_field("ptr2", n1)
+        self.assertEqual(n1.get_field("ptr1"), n2)
+        self.assertEqual(n0._get_revptrs(), [])
+        self.assertEqual(n1._get_revptrs(), [(n0, "ptr0"), (n2, "ptr2")])
+        self.assertEqual(n2._get_revptrs(), [(n1, "ptr1")])
+        
     def test_get_set_node_fields_with_overflow(self):
-        pass
+        n0 = Node("n0", self.P4)
+        n1 = Node("n1", self.P4)
+        n2 = Node("n2", self.P4)
+        for i in range(2*p+1):
+            n0 = n0.set_field("val", i)
+        n0 = n0.set_field("ptr0", n1)
+        n1 = n1.set_field("ptr1", n2)
+        n2 = n2.set_field("ptr2", n1)
+        self.assertEqual(n1.get_field("ptr1"), n2)
+        self.assertEqual(n0._get_revptrs(), [])
+        self.assertEqual(n1._get_revptrs(), [(n0, "ptr0"), (n2, "ptr2")])
+        self.assertEqual(n2._get_revptrs(), [(n1, "ptr1")])
+        self.assertEqual(len(n0.mods), 2)
 
+    def test_get_set_node_self_pointing(self):
+        n0 = Node("n0", self.P4)
+        n1 = Node("n1", self.P4)
+        n0 = n0.set_field("ptr0", n0)
+        self.assertEqual(n0.get_field("ptr0"), n0)
+        n0 = n0.set_field("ptr1", n1)
+        for i in range(2*p+1):
+            n0 = n0.set_field("val", i)
+        self.assertEqual(n0.get_field("ptr0"), n0)
+        self.assertEqual(n0.get_field("ptr1"), n1)
+        self.assertEqual(len(n0.mods), 3)
 
 if __name__ == '__main__':
     test_suite = TestPartialPersistence

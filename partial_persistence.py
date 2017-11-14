@@ -39,7 +39,7 @@ class Node():
         return self.name
 
     def formatted(self):
-        s = str(self) + "\n"
+        s = "\n" + str(self) + "\n"
         s += "PARENT: " + str(self.parent) + "\n"
         s += "FIELDS:\n"
         for f in self.fields.keys():
@@ -96,7 +96,6 @@ class Node():
     # also goes through reverse pointers and sends them to itself
     @classmethod
     def _from_node(cls, node):
-        print("CALLED _from_node")
         new_node = cls(node.name, node.parent)
         new_node.fields = node.fields.copy()
         for _, name, val in node.mods:
