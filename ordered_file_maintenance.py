@@ -4,58 +4,73 @@
 import math
 
 
+# does nothing, for optimal performance
 def performance_callback(index, new_index):
     # call when you move the element at index to new_index
-    pass
+    return
 
-# TODO flesh this out
+
+
 # to keep track of position in a file, make a new FilePointer object and make an OrderedFile with its file_callback
 class FilePointer:
 
     def __init__(self):
         self.index = 0
+        self.OFM = OrderedFile(self.file_callback)
 
-    def file_callback(index, new_index):
-        # call when you move the element at index to new_index
+    def file_callback(self, index, new_index):
+        # call any time you move an element at index to new_index
         if index == self.index:
             self.index = new_index
         return
 
-# TODO flesh this out
+    def read_at_finger(self):
+        return self.OFM.read(self.index)
+
+    def insert_after(self, elem):
+        self.OFM.insert(elem, self.index)
+        return
+
+
+
 # to keep track of a list of positions in a file, make a new DSPointerList object and make an OrderedFile with its callback
 class DSPointerList:
 
     def __init__(self, node_index_map):
         self.node_index_map = node_index_map  # maps nodes to indices in the file
+        self.OFM = OrderedFile(self.DS_callback)
 
-    def DS_callback(index, new_index):
+    def DS_callback(self, index, new_index):
         if index in index_map.values():
             for node in self.node_index_map.keys():
                 if self.node_index_map[node] == index:
                     self.node_index_map[node] = new_index
         return
+
+    def read_at_node(self, node):
+        return self.OFM.read(self.node_index_map.get(node))
+
+    def insert_after_node(self, elem, node):
+        self.OFM.insert(elem, self.node_index_map.get(node))
+        return
+
+    def is_before(self, node1, node2):
+        return self.node_index_map[node1] < self.node_index_map[node2]
             
 
 
 # represent a file with this behind-the-scenes thing that keeps elements O(1) apart and takes only O(log^2(n)) updates
 class OrderedFile(list):
 
-    def __init__(self, callback=None):
+    def __init__(self, callback=performance_callback):
         super(OrderedFile, self).__init__([None, None])
         self.callback = callback  # TODO call this callback every time we move elements around; when performance testing it's None
 
+    # report what value is present at a given index pos
     def read(arr, pos):
-        x = 0
-        i = 0
-        while pos >= x:
-            if arr[i] is not None:
-                x += 1
-            i += 1
-
-            if i > len(arr):
-                raise Exception("Index not present")
-
-        return arr[i-1]
+        if arr[pos] is None:
+            raise ValueError("Attempted to read at position where there is no value.")
+        return arr[pos]
 
     # TODO
     # given a position, scan forward O(1) to find the next non-empty element (not-including-this-one);
@@ -63,7 +78,7 @@ class OrderedFile(list):
     def get_next(arr, pos):
         pass
 
-    # add the element elem to the array at position pos, rewriting as needed to make space
+    # add the element elem to the array after position pos, rewriting as needed to make space
     # return nothing; modify the array in place
     def insert(arr, elem, pos):
         if pos > len(arr):
@@ -157,10 +172,10 @@ class OrderedFile(list):
 
     # collapse the interval from i to j, clumping elements to the left of it
     # if j > len(arr), just go to end of array
-    # meanwhile insert (or delete if deleting) elem at pos
+    # meanwhile insert (or delete if deleting) elem after (at) pos
     def _collapse(arr, i, j, elem, pos, deleting=False):
         j = min(j, len(arr))
-        interval = (arr[i:pos]+arr[pos+1:j]) if deleting else (arr[i:pos] + [elem] + arr[pos:j])
+        interval = (arr[i:pos]+arr[pos+1:j]) if deleting else (arr[i:pos+1] + [elem] + arr[pos+1:j])
         return interval
 
     # rewrites all elements from i to j-1 to be evenly spread across the interval and return nothing
