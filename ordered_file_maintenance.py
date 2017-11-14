@@ -24,19 +24,28 @@ class FilePointer:
             self.index = new_index
         return
 
+    # get the element currently pointed to by the finger
     def read_at_finger(self):
         return self.OFM.read(self.index)
 
+    # if there's a next element in the file, move the finger to it, otherwise stay put
     def increment_finger(self):
-        self.index = self.OFM.get_next(self.index)
+        next_index = self.OFM.get_next(self.index)
+        if next_index is not None:
+            self.index = next_index
         return
 
+    # if there's a previous element in the file, move the finger to it, otherwise stay put
     def decrement_finger(self):
-        self.index = self.OFM.get_previous(self.index)
+        next_index = self.OFM.get_previous(self.index)
+        if next_index is not None:
+            self.index = next_index
         return
 
-    def insert_after(self, elem):
+    # insert elem after the current finger location, move finger to point there
+    def insert_after_finger(self, elem):
         self.OFM.insert(elem, self.index)
+        self.increment_finger()
         return
 
 
@@ -132,47 +141,6 @@ class OrderedFile(list):
             if block_density <= max_density:
                 # yay! we can stop at this level
                 interval = arr._collapse(start, end, elem, pos)
-                arr._even_spread(start, end, interval)
-                return
-
-            # in this case, this level isn't good enough and we need to iterate and rewrite at a higher level
-            level += 1
-
-    # remove the element from the array at the given position
-    # return nothing; modify the array in place
-    def delete(arr, pos):
-        if pos > len(arr):
-            raise ValueError("attempted deleting past the end of the array")
-
-        level = 0  # what level we're looking at within the tree, going from bottom up
-        while (True):
-            height = int(math.log(len(arr)-1, 2))+1  # height of tree, ceiling functioned
-            # print(level, height)
-            # check for being at a level such that we need to reduce space in the array
-            if level > height:
-                interval = arr._collapse(0, len(arr), None, pos, True)
-                arr._even_spread(0, len(arr)//2, interval)
-                arr = arr[0:len(arr)//2]
-                height -= 1
-                return
-
-            num_blocks = arr._num_blocks(level)
-            # blocklen = len(arr)/num_blocks; blocknum = int(pos/blocklen); start, end = block_index*blocklen, (block_index+1)*blocklen
-            block_index = int(pos * num_blocks / len(arr))
-            start = int(block_index * len(arr) / num_blocks)
-            end = int((block_index + 1) * len(arr) / num_blocks)
-            block_element_count = arr._scan(start, end) - 1  # +1 because we'll delete one
-            block_max_elements = end - start
-            block_density = block_element_count / block_max_elements
-
-            depth = height - level
-            max_density = 3/4 + 1/4*depth/height
-            min_density = 1/2 - 1/4*depth/height
-            #print(block_density, min_density, max_density)
-
-            if block_density >= min_density:
-                # yay! we can stop at this level
-                interval = arr._collapse(start, end, None, pos, True)
                 arr._even_spread(start, end, interval)
                 return
 
