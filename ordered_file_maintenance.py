@@ -3,10 +3,46 @@
 
 import math
 
-class OrderedFile(list):
+
+def performance_callback(index, new_index):
+    # call when you move the element at index to new_index
+    pass
+
+# TODO flesh this out
+# to keep track of position in a file, make a new FilePointer object and make an OrderedFile with its file_callback
+class FilePointer:
 
     def __init__(self):
+        self.index = 0
+
+    def file_callback(index, new_index):
+        # call when you move the element at index to new_index
+        if index == self.index:
+            self.index = new_index
+        return
+
+# TODO flesh this out
+# to keep track of a list of positions in a file, make a new DSPointerList object and make an OrderedFile with its callback
+class DSPointerList:
+
+    def __init__(self, node_index_map):
+        self.node_index_map = node_index_map  # maps nodes to indices in the file
+
+    def DS_callback(index, new_index):
+        if index in index_map.values():
+            for node in self.node_index_map.keys():
+                if self.node_index_map[node] == index:
+                    self.node_index_map[node] = new_index
+        return
+            
+
+
+# represent a file with this behind-the-scenes thing that keeps elements O(1) apart and takes only O(log^2(n)) updates
+class OrderedFile(list):
+
+    def __init__(self, callback=None):
         super(OrderedFile, self).__init__([None, None])
+        self.callback = callback  # TODO call this callback every time we move elements around; when performance testing it's None
 
     def read(arr, pos):
         x = 0
@@ -20,6 +56,12 @@ class OrderedFile(list):
                 raise Exception("Index not present")
 
         return arr[i-1]
+
+    # TODO
+    # given a position, scan forward O(1) to find the next non-empty element (not-including-this-one);
+    # should function like an iterator into the file being represented
+    def get_next(arr, pos):
+        pass
 
     # add the element elem to the array at position pos, rewriting as needed to make space
     # return nothing; modify the array in place
