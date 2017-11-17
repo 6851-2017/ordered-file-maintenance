@@ -19,7 +19,7 @@ class PartiallyPersistentPointerPackage():
 
 # TODOs:
 # how do we handle lookups for things before the version of the current base node?
-# make it so all edits that happen because of each other are at same version #
+# fix cycle of death
 
 class Node():
     '''A partially persistent DS node; stores fields, reverse pointers, mods.'''
@@ -44,9 +44,6 @@ class Node():
         s += "FIELDS:\n"
         for f in self.fields.keys():
             s += "\t" + f + ": " + str(self.fields.get(f)) +"\n"
-##        s += "REVERSE POINTERS:\n"
-##        for (n, f) in self._get_revptrs():
-##            s += "\t" + "node " + str(n) + ", field " + f +"\n"
         s += "MODS:\n"
         for (vers, f, val) in self.mods:
             if f == "__REVERSE_PTRS__":
