@@ -1,5 +1,7 @@
 # jamb, rusch 6.851 Fall 2017
 
+from ordered_list import Versioner, VersionPtr
+
 d = 3  # max number of outgoing pointers allowed for any object
 p = 3  # max number of pointers allowed to any object
 
@@ -12,12 +14,12 @@ class FPPM():
 
     # constructor
     def __init__(self):
-        self.versioner = OrderedFile()
-        self.root = FPNode("root", self)
+        self.versioner = Versioner()
+        self.root = FPNode("root", self)  # TODO does this even make sense?
 
     # returns the root FPNode at the given VersionPtr
     def get_root(self, version):
-        pass
+        return version.get_root()
 
 
 # TODOs:
