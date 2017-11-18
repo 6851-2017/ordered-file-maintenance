@@ -22,10 +22,10 @@ class Versioner():
             version.index = new_index
         return
 
-    # insert the given obj into the OrderedList after the given VersionPtr
-    # return a VersionPtr to the newly inserted obj, and add it to the list of VersionPtrs to update
-    def insert_after(self, version, obj):
-        new_version = self.list.insert_after(version, obj)
+    # insert a new VersionPtr into the OrderedList after the given VersionPtr,
+    # return it, and add it to the list of VersionPtrs to update
+    def insert_after(self, version):
+        new_version = self.list.insert_after(version)
         self.ptrs_to_update.put(new_version.index, new_version)
         return new_version
     
@@ -38,9 +38,8 @@ class OrderedList(list):
         super(OrderedList, self).__init__([None, None])
         self.callback = callback  # call on (index, new_index) any time we move a VersionPtr from index to new_index
 
-    # insert the given obj into the list after the given VersionPtr
-    # return a VersionPtr to the newly inserted obj
-    def insert_after(self, version, obj):
+    # insert a new VersionPtr into the list after the given VersionPtr and return it
+    def insert_after(self, version):
         pass
     
 
@@ -64,6 +63,10 @@ class VersionPtr():
     # get root
     def get_root(self):
         return self.root
+
+    # string format
+    def __str__(self):
+        return "<VersionPtr at index %s>" % index
 
 
     
