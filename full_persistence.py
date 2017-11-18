@@ -22,9 +22,9 @@ class FPPM():
 
 
 # TODOs:
-# implement all the stuff with "pass"
 # when we split it seems like we should make just one new and not both new for efficiency
 # overflow is a mess and almost certainly has bugs / wrong logic somewhere
+# omg we need a less inefficient way to store reverse pointers than a list of pairs that we rewrite with every change
 
 class FPNode():
     '''A fully persistent DS node: stores fields, reverse pointers, mods.'''
@@ -181,11 +181,23 @@ class FPNode():
 
     # manually replace pointers to go to newly created nodes and not reference the obsoletified ones
     def _update_reverse_pointer(self, old_node, new_node, field_name, version):
-        pass
+        revptrs_list = self._get_revptrs(version)
+        for i in range(len(revptrs_list)):
+            (node, name) = revptrs_list[i]
+            if node == old_node:
+                revptrs_list[i] = (new_node, name)
+        return
 
+    # manually replace pointers to go to newly created nodes and not reference the obsoletified ones
     def _update_forward_pointer(self, old_node, new_node, field_name, version):
-        pass
-
+        if version == self.earliest_version and self.fields[field_name] == old_node:
+            self.fields[field_name] = new_node
+        for i in range(len(self.mods)):
+            vers, name, val = self.mods[i]
+            if version == vers and field_name == name and val == old_node:
+                self.mods[i] = vers, name, new_node
+        return
+    
 
 
 
