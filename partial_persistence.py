@@ -77,17 +77,15 @@ class Node():
         node = self
         # overflow if needed
         if len(node.mods) >= 2*p:
-            print("Old node: {}".format(node), node)
             node.is_active = False
             node = Node._from_node(self)
-            print("New node: {}".format(node), node)
-
+        
         # update reverse pointers
-        if isinstance(old_value, Node):
+        if type(old_value) is Node:
             old_value._remove_reverse_pointer(node, name)
-        if isinstance(value, Node):
+        if type(value) is Node:
             value._add_reverse_pointer(node, name)
-
+        
         return node
 
 
@@ -97,20 +95,17 @@ class Node():
     # also goes through reverse pointers and sends them to itself
     @classmethod
     def _from_node(cls, node):
-        print("Node {} mem is ".format(node), node)
-        print("",node.get_field("ptr0"))
         new_node = cls(node.name, node.parent)
         new_node.fields = node.fields.copy()
         for _, name, val in node.mods:
             new_node.fields[name] = val
         for name in new_node.fields.keys():
             val = new_node.fields[name]
-            if isinstance(val, Node):
+            if type(val) is Node:
                 val._remove_reverse_pointer(node, name)
                 val._add_reverse_pointer(new_node, name)
         for from_node, field_name in node._get_revptrs():
             from_node.set_field(field_name, new_node, new_version=False)
-        print("",node.get_field("ptr0"))
         return new_node
 
     # find the current version
@@ -139,12 +134,7 @@ class Node():
     def _remove_reverse_pointer(self, from_node, field_name):
         if self.is_active:
             revptrs = list(self._get_revptrs())
-            try:
-                revptrs.remove((from_node, field_name))
-            except:
-                # TODO Handle this more cleanly, but the revpointer might have
-                # been changed during an overflow
-                pass
+            revptrs.remove((from_node, field_name))
             self.set_field("__REVERSE_PTRS__", revptrs, new_version=False)
 
 
