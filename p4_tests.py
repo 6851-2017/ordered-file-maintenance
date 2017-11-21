@@ -33,7 +33,6 @@ set_field
         self.assertEqual(str(n0), "n0")
         self.assertEqual(self.P4.get_nodes(), [n0])
         self.assertEqual(n0.parent, self.P4)
-        self.assertEqual(n0.fields, {"__REVERSE_PTRS__": []})
         self.assertEqual(n0.mods, [])
         self.assertEqual(n0.is_active, True)
 
@@ -91,7 +90,7 @@ set_field
         self.assertEqual(n0._get_revptrs(), [])
         self.assertEqual(n1._get_revptrs(), [(n0, "ptr0"), (n2, "ptr2")])
         self.assertEqual(n2._get_revptrs(), [(n1, "ptr1")])
-        
+
     def test_get_set_node_fields_with_overflow(self):
         n0 = Node("n0", self.P4)
         n1 = Node("n1", self.P4)
@@ -117,7 +116,7 @@ set_field
             n0 = n0.set_field("val", i)
         self.assertEqual(n0.get_field("ptr0"), n0)
         self.assertEqual(n0.get_field("ptr1"), n1)
-        self.assertEqual(len(n0.mods), 3)
+        self.assertEqual(len(n0.mods), 4)
 
     def test_cycle_of_death(self):
         n0 = Node("n0", self.P4)
