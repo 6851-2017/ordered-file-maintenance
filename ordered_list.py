@@ -26,9 +26,10 @@ class Versioner():
     # return it, and add it to the list of VersionPtrs to update
     def insert_after(self, version):
         new_version = self.list.insert_after(version)
-        self.ptrs_to_update.put(new_version.index, new_version)
+        if new_version:
+            self.ptrs_to_update[new_version.index] = new_version
         return new_version
-    
+
 
 class OrderedList(list):
     '''Ordered-file-maintenance-based O(1) data structure'''
@@ -41,7 +42,7 @@ class OrderedList(list):
     # insert a new VersionPtr into the list after the given VersionPtr and return it
     def insert_after(self, version):
         pass
-    
+
 
 class VersionPtr():
     '''Version object to be stored in an OrderedList, be compared,
@@ -69,4 +70,4 @@ class VersionPtr():
         return "<VersionPtr at index %s>" % index
 
 
-    
+

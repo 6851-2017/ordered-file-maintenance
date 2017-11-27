@@ -128,5 +128,4 @@ set_field
         self.assertEqual(n0.get_field("ptr0"), n1)
 
 if __name__ == '__main__':
-    test_suite = TestPartialPersistence
     unittest.main()
