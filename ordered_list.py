@@ -61,9 +61,10 @@ class Versioner():
     # return it, and add it to the list of VersionPtrs to update
     def insert_after(self, version):
         new_version = self.list.insert_after(version)
-        self.ptrs_to_update.put(new_version.index, new_version)
+        if new_version:
+            self.ptrs_to_update[new_version.index] = new_version
         return new_version
-    
+
 
 class OrderedList(list):
     '''Ordered-file-maintenance-based O(1) data structure'''
@@ -120,4 +121,4 @@ class BottomBucket():
         pass
 
 
-    
+
