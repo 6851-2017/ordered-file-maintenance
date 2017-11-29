@@ -28,7 +28,7 @@ class VersionPtr():
 
     # get concatenated bucket and within-bucket index
     def get_index(self):
-        return (version.bucket.index << int(math.log2(self.count)+1)) + self.index
+        return (version.bucket.index << int(math.log2(self.bucket.parent.count)+1)) + self.index
 
     # get root
     def get_root(self):
@@ -84,11 +84,18 @@ class OrderedList(list):
         bucket_count = None
         while (bucket_count is None):
             bucket_count = version.bucket.insert_count()
-        index = version.index + (1 << int(math.log2(self.count)))  # TODO if count's log increases between inserts this is BAD
+        index = version.index + (1 << int(math.log2(self.count)-bucket_count))  # TODO if count's log increases between inserts this is BAD
         new_ptr = VersionPtr(index, version.get_root(), version.bucket)
         new_ptr.next_in_bucket = version.next_in_bucket
         version.next_in_bucket = new_ptr
         return new_ptr
+
+    # add a new bucket to the bucket_list after the specified position
+    # adjust indices of all later buckets accordingly
+    def insert_bucket_after(self, bucket_index, new_bucket):
+        self.bucket_list.insert(bucket_index+1, new_bucket)
+        for i in range(bucket_index+2, len(bucket_list)):
+            self.bucket_list[i].index += 1
 
     # return the total number of version pointers in self
     def get_count():
@@ -116,9 +123,25 @@ class BottomBucket():
             return None
         return self.count
 
-    # split into two bottom buckets, insert the second after the first in the parent
+    # split into two bottom buckets by scanning and moving the second half, insert the second after the first in the parent
     def split(self):
-        pass
+        ver_ptr = self.first_ptr
+        last_first_half = None
+        for i in range(self.count//2):
+            last_first_half = ver_ptr
+            ver_ptr = ver_ptr.next_in_bucket
+        last_first_half.next_in_bucket = None
+        new_bucket = BottomBucket(self.index+1, self.parent, ver_ptr)
+        prev_ptr = last_first_half
+        for i in range(self.count//2, self.count):
+            ver_ptr.bucket = new_bucket
+            bucket_count = self.insert_count()
+            ver_ptr.index = (prev_ptr.index if prev_ptr != last_first_half else 0) + (1 << int(math.log2(self.parent.count)-bucket_count))
+            prev_ptr = ver_ptr
+            ver_ptr = ver_ptr.next_in_bucket
+        self.count = self.count//2
+        self.parent.insert_bucket_after(self.index, new_bucket)
+            
 
 
 
