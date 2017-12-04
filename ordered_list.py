@@ -80,7 +80,6 @@ class OrderedList(list):
         self.count = 0
 
     # insert a new VersionPtr into the list after the given VersionPtr and return it
-    # TODO how do we ever insert the first thing?
     # TODO how do we know what root to insert? should probably change at some point
     def insert_after(self, version):
         self.count += 1
@@ -92,6 +91,17 @@ class OrderedList(list):
         new_ptr.next_in_bucket = version.next_in_bucket
         version.next_in_bucket = new_ptr
         return new_ptr
+
+    # same as insert_after except there's nothing in the list so it can't be after something
+    # pass in the root of the DS we're making an OL on
+    def insert_first(self, root):
+        assert len(self.bucket_list) == 0
+        ver_ptr = VersionPtr(0, root, None)
+        new_bucket = BottomBucket(index=0, parent=self.parent, first_elt=ver_ptr)
+        ver_ptr.bucket = new_bucket
+        self.bucket_list = [new_bucket]
+        self.count += 1
+        return ver_ptr
 
     # add a new bucket to the bucket_list after the specified position
     # adjust indices of all later buckets accordingly
