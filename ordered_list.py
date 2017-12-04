@@ -1,11 +1,14 @@
 # jamb, rusch 6.851 Fall 2017
 
 # TODOs:
-# implement all the stuff with "pass"
+# stuff below
 # change bucket_list to OFM not list
 # implement VersionPtr.get_index()
+# do we need callbacks anywhere?
 
 import math
+
+W = 64  # machine word size
 
 
 class VersionPtr():
@@ -29,7 +32,7 @@ class VersionPtr():
 
     # get concatenated bucket and within-bucket index
     def get_index(self):
-        return (self.bucket.index << int(math.log2(self.bucket.parent.count)+1)) + self.index
+        return (version.bucket.index << (W+1)) + self.index
 
     # get root
     def get_root(self):
@@ -96,11 +99,22 @@ class OrderedList(list):
         bucket_count = None
         while (bucket_count is None):
             bucket_count = version.bucket.insert_count()
-        index = version.index + (1 << int(math.log2(self.count)-bucket_count))  # TODO if count's log increases between inserts this is BAD
+        index = version.index + (1 << (W - bucket_count))
         new_ptr = VersionPtr(index, version.get_root(), version.bucket)
         new_ptr.next_in_bucket = version.next_in_bucket
         version.next_in_bucket = new_ptr
         return new_ptr
+
+    # same as insert_after except there's nothing in the list so it can't be after something
+    # pass in the root of the DS we're making an OL on
+    def insert_first(self, root):
+        assert len(self.bucket_list) == 0
+        ver_ptr = VersionPtr(0, root, None)
+        new_bucket = BottomBucket(index=0, parent=self.parent, first_elt=ver_ptr)
+        ver_ptr.bucket = new_bucket
+        self.bucket_list = [new_bucket]
+        self.count += 1
+        return ver_ptr
 
     # add a new bucket to the bucket_list after the specified position
     # adjust indices of all later buckets accordingly
@@ -130,7 +144,7 @@ class BottomBucket():
     # if too full, do a split and return None, user must redo since the version may have shifted buckets
     def insert_count(self):
         self.count += 1
-        if (self.count > math.log2(self.parent.get_count())):
+        if (self.count > W):
             self.split()
             return None
         return self.count
@@ -150,7 +164,7 @@ class BottomBucket():
             print("Second loop {}".format(i))
             ver_ptr.bucket = new_bucket
             bucket_count = self.insert_count()
-            ver_ptr.index = (prev_ptr.index if prev_ptr != last_first_half else 0) + (1 << int(math.log2(self.parent.count)-bucket_count))
+            ver_ptr.index = (prev_ptr.index if prev_ptr != last_first_half else 0) + (1 << (W - bucket_count))
             prev_ptr = ver_ptr
             ver_ptr = ver_ptr.next_in_bucket
         self.count = self.count//2
