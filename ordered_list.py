@@ -112,7 +112,6 @@ class OrderedList(list):
         ver_ptr.bucket = new_bucket
         self.bucket_list = [new_bucket]
         self.count += 1
-        print("Here", new_bucket)
         return ver_ptr
 
     # add a new bucket to the bucket_list after the specified position
@@ -153,14 +152,12 @@ class BottomBucket():
         ver_ptr = self.first_ptr
         last_first_half = None
         for i in range(self.count//2):
-            print("First loop {}".format(i))
             last_first_half = ver_ptr
             ver_ptr = ver_ptr.next_in_bucket
         last_first_half.next_in_bucket = None
         new_bucket = BottomBucket(self.index+1, self.parent, ver_ptr)
         prev_ptr = last_first_half
         for i in range(self.count//2, self.count):
-            print("Second loop {}".format(i))
             ver_ptr.bucket = new_bucket
             bucket_count = self.insert_count()
             ver_ptr.index = (prev_ptr.index if prev_ptr != last_first_half else 0) + (1 << (W - bucket_count))
