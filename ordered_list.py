@@ -48,17 +48,22 @@ class Versioner():
 
     # constructor
     def __init__(self):
-        self.list = OrderedList(self.callback)
-        self.ptrs_to_update = {}  # map from index to VersionPtr; note only one VersionPtr should ever be created to that index
+        self.list = OrderedList(self.callback, self)
+        self.ptrs_to_update = {}  # map from index to Bucket; note only one Bucket should ever be created to that index
 
     # OrderedList should call this whenever it moves the bucket at position index to new_index
     # returns nothing
     def callback(self, index, new_index):
-        version = self.ptrs_to_update.get(index)
-        if (version):
-            assert(version.index == index)
-            version.index = new_index
+        bucket = self.ptrs_to_update.get(index)
+        if (bucket):
+            assert(bucket.index == index)
+            bucket.index = new_index
         return
+
+    # add a bucket to keep track of in callbacks
+    def track_bucket(self, index, bucket):
+        assert index >= len(self.ptrs_to_update) or self.ptrs_to_update[index] is None
+        self.ptrs_to_update[index] = bucket
 
     # insert a new VersionPtr into the OrderedList after the given VersionPtr,
     # return it, and add it to the list of VersionPtrs to update
@@ -69,18 +74,21 @@ class Versioner():
         return new_version
 
     def insert_first(self, root):
-        return self.list.insert_first(root)
+        ver_ptr = self.list.insert_first(root)
+        self.track_bucket(0, ver_ptr.bucket)
+        return ver_ptr
 
 
 class OrderedList(list):
     '''Ordered-file-maintenance-based O(1) data structure'''
 
     # constructor
-    def __init__(self, callback):
+    def __init__(self, callback, versioner):
         super(OrderedList, self).__init__([None, None])
         self.callback = callback  # call on (index, new_index) any time we move a BottomBucket from index to new_index
         self.bucket_list = []  # TODO make this an O(log n) OrderedFileMaintenance thingy instead of a regular list
         self.count = 0
+        self.versioner = versioner
 
     # insert a new VersionPtr into the list after the given VersionPtr and return it
     # TODO how do we know what root to insert? should probably change at some point
@@ -112,7 +120,7 @@ class OrderedList(list):
     def insert_bucket_after(self, bucket_index, new_bucket):
         self.bucket_list.insert(bucket_index+1, new_bucket)
         for i in range(bucket_index+2, len(bucket_list)):
-            self.bucket_list[i].index += 1
+            self.callback(self.bucket_list[i].index, self.bucket_list[i].index+1)
 
     # return the total number of version pointers in self
     def get_count(self):
@@ -160,6 +168,7 @@ class BottomBucket():
             ver_ptr = ver_ptr.next_in_bucket
         self.count = self.count//2
         self.parent.insert_bucket_after(self.index, new_bucket)
+        self.parent.versioner.track_bucket(new_bucket.index, new_bucket)
 
 
 
