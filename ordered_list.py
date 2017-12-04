@@ -31,7 +31,7 @@ class VersionPtr():
 
     # get concatenated bucket and within-bucket index
     def get_index(self):
-        return (version.bucket.index << (W+1)) + self.index
+        return (self.bucket.index << (W+1)) + self.index
 
     # get root
     def get_root(self):
@@ -104,7 +104,7 @@ class OrderedList(list):
         ver_ptr.bucket = new_bucket
         self.bucket_list = [new_bucket]
         self.count += 1
-        print("Here", bucket)
+        print("Here", new_bucket)
         return ver_ptr
 
     # add a new bucket to the bucket_list after the specified position
