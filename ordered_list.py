@@ -3,7 +3,6 @@
 # TODOs:
 # stuff below
 # change bucket_list to OFM not list
-# implement VersionPtr.get_index()
 # do we need callbacks anywhere?
 
 import math
@@ -32,7 +31,7 @@ class VersionPtr():
 
     # get concatenated bucket and within-bucket index
     def get_index(self):
-        return (version.bucket.index << (W+1)) + self.index
+        return (self.bucket.index << (W+1)) + self.index
 
     # get root
     def get_root(self):
@@ -52,7 +51,7 @@ class Versioner():
         self.list = OrderedList(self.callback)
         self.ptrs_to_update = {}  # map from index to VersionPtr; note only one VersionPtr should ever be created to that index
 
-    # OrderedList should call this whenever it moves the element at position index to new_index
+    # OrderedList should call this whenever it moves the bucket at position index to new_index
     # returns nothing
     def callback(self, index, new_index):
         version = self.ptrs_to_update.get(index)
@@ -79,18 +78,9 @@ class OrderedList(list):
     # constructor
     def __init__(self, callback):
         super(OrderedList, self).__init__([None, None])
-        self.callback = callback  # call on (index, new_index) any time we move a VersionPtr from index to new_index
+        self.callback = callback  # call on (index, new_index) any time we move a BottomBucket from index to new_index
         self.bucket_list = []  # TODO make this an O(log n) OrderedFileMaintenance thingy instead of a regular list
         self.count = 0
-
-    def insert_first(self, root):
-        self.count = 1
-        bucket = BottomBucket(0, self, 'FIRST')
-        self.bucket_list.append(bucket)
-        ptr = VersionPtr(0, root, bucket)
-        bucket.first_ptr = ptr
-        print("Here", bucket)
-        return ptr
 
     # insert a new VersionPtr into the list after the given VersionPtr and return it
     # TODO how do we know what root to insert? should probably change at some point
@@ -110,10 +100,11 @@ class OrderedList(list):
     def insert_first(self, root):
         assert len(self.bucket_list) == 0
         ver_ptr = VersionPtr(0, root, None)
-        new_bucket = BottomBucket(index=0, parent=self.parent, first_elt=ver_ptr)
+        new_bucket = BottomBucket(index=0, parent=self, first_elt=ver_ptr)
         ver_ptr.bucket = new_bucket
         self.bucket_list = [new_bucket]
         self.count += 1
+        print("Here", new_bucket)
         return ver_ptr
 
     # add a new bucket to the bucket_list after the specified position
@@ -136,7 +127,7 @@ class BottomBucket():
     # constructor; index is position within OrderedList parent; first_elt is first VersionPtr inserted
     def __init__(self, index, parent, first_elt):
         self.index = index
-        self.count = 0
+        self.count = 1
         self.parent = parent
         self.first_ptr = first_elt
 
