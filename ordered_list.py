@@ -1,10 +1,13 @@
 # jamb, rusch 6.851 Fall 2017
 
 # TODOs:
-# implement all the stuff with "pass"
+# stuff below
 # change bucket_list to OFM not list
 # implement VersionPtr.get_index()
+# do we need callbacks anywhere?
 
+
+W = 64  # machine word size
 
 
 class VersionPtr():
@@ -84,7 +87,7 @@ class OrderedList(list):
         bucket_count = None
         while (bucket_count is None):
             bucket_count = version.bucket.insert_count()
-        index = version.index + (1 << int(math.log2(self.count)-bucket_count))  # TODO if count's log increases between inserts this is BAD
+        index = version.index + (1 << (W - bucket_count))
         new_ptr = VersionPtr(index, version.get_root(), version.bucket)
         new_ptr.next_in_bucket = version.next_in_bucket
         version.next_in_bucket = new_ptr
@@ -118,7 +121,7 @@ class BottomBucket():
     # if too full, do a split and return None, user must redo since the version may have shifted buckets
     def insert_count(self):
         self.count += 1
-        if (self.count > math.log2(parent.get_count())):
+        if (self.count > W):
             self.split()
             return None
         return self.count
