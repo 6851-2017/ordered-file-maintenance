@@ -5,6 +5,7 @@
 # change bucket_list to OFM not list
 # implement VersionPtr.get_index()
 
+import math
 
 
 class VersionPtr():
@@ -28,7 +29,7 @@ class VersionPtr():
 
     # get concatenated bucket and within-bucket index
     def get_index(self):
-        return (version.bucket.index << int(math.log2(self.bucket.parent.count)+1)) + self.index
+        return (self.bucket.index << int(math.log2(self.bucket.parent.count)+1)) + self.index
 
     # get root
     def get_root(self):
@@ -36,8 +37,8 @@ class VersionPtr():
 
     # string format
     def __str__(self):
-        return "<VersionPtr at index %s>" % index
-    
+        return "<VersionPtr at index %s>" % self.index
+
 
 class Versioner():
     '''Versioning object that stores an OrderedList and a list of VersionPtrs into it
@@ -65,6 +66,9 @@ class Versioner():
             self.ptrs_to_update[new_version.index] = new_version
         return new_version
 
+    def insert_first(self, root):
+        return self.list.insert_first(root)
+
 
 class OrderedList(list):
     '''Ordered-file-maintenance-based O(1) data structure'''
@@ -76,8 +80,16 @@ class OrderedList(list):
         self.bucket_list = []  # TODO make this an O(log n) OrderedFileMaintenance thingy instead of a regular list
         self.count = 0
 
+    def insert_first(self, root):
+        self.count = 1
+        bucket = BottomBucket(0, self, 'FIRST')
+        self.bucket_list.append(bucket)
+        ptr = VersionPtr(0, root, bucket)
+        bucket.first_ptr = ptr
+        print("Here", bucket)
+        return ptr
+
     # insert a new VersionPtr into the list after the given VersionPtr and return it
-    # TODO how do we ever insert the first thing?
     # TODO how do we know what root to insert? should probably change at some point
     def insert_after(self, version):
         self.count += 1
@@ -98,7 +110,7 @@ class OrderedList(list):
             self.bucket_list[i].index += 1
 
     # return the total number of version pointers in self
-    def get_count():
+    def get_count(self):
         return self.count
 
 
@@ -110,7 +122,7 @@ class BottomBucket():
     # constructor; index is position within OrderedList parent; first_elt is first VersionPtr inserted
     def __init__(self, index, parent, first_elt):
         self.index = index
-        self.count = 1
+        self.count = 0
         self.parent = parent
         self.first_ptr = first_elt
 
@@ -118,7 +130,7 @@ class BottomBucket():
     # if too full, do a split and return None, user must redo since the version may have shifted buckets
     def insert_count(self):
         self.count += 1
-        if (self.count > math.log2(parent.get_count())):
+        if (self.count > math.log2(self.parent.get_count())):
             self.split()
             return None
         return self.count
@@ -128,12 +140,14 @@ class BottomBucket():
         ver_ptr = self.first_ptr
         last_first_half = None
         for i in range(self.count//2):
+            print("First loop {}".format(i))
             last_first_half = ver_ptr
             ver_ptr = ver_ptr.next_in_bucket
         last_first_half.next_in_bucket = None
         new_bucket = BottomBucket(self.index+1, self.parent, ver_ptr)
         prev_ptr = last_first_half
         for i in range(self.count//2, self.count):
+            print("Second loop {}".format(i))
             ver_ptr.bucket = new_bucket
             bucket_count = self.insert_count()
             ver_ptr.index = (prev_ptr.index if prev_ptr != last_first_half else 0) + (1 << int(math.log2(self.parent.count)-bucket_count))
@@ -141,7 +155,7 @@ class BottomBucket():
             ver_ptr = ver_ptr.next_in_bucket
         self.count = self.count//2
         self.parent.insert_bucket_after(self.index, new_bucket)
-            
+
 
 
 
