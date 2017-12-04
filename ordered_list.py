@@ -31,7 +31,7 @@ class VersionPtr():
 
     # get concatenated bucket and within-bucket index
     def get_index(self):
-        return (version.bucket.index << int(math.log2(self.bucket.parent.count)+1)) + self.index
+        return (version.bucket.index << (W+1)) + self.index
 
     # get root
     def get_root(self):
@@ -149,7 +149,7 @@ class BottomBucket():
         for i in range(self.count//2, self.count):
             ver_ptr.bucket = new_bucket
             bucket_count = self.insert_count()
-            ver_ptr.index = (prev_ptr.index if prev_ptr != last_first_half else 0) + (1 << int(math.log2(self.parent.count)-bucket_count))
+            ver_ptr.index = (prev_ptr.index if prev_ptr != last_first_half else 0) + (1 << (W - bucket_count))
             prev_ptr = ver_ptr
             ver_ptr = ver_ptr.next_in_bucket
         self.count = self.count//2
