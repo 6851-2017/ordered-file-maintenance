@@ -3,7 +3,6 @@
 # TODOs:
 # stuff below
 # change bucket_list to OFM not list
-# do we need callbacks anywhere?
 
 import math
 
@@ -48,7 +47,7 @@ class Versioner():
 
     # constructor
     def __init__(self):
-        self.list = OrderedList(self.callback, self)
+        self.list = OrderedListComparison(self.callback, self)
         self.ptrs_to_update = {}  # map from index to Bucket; note only one Bucket should ever be created to that index
 
     # OrderedList should call this whenever it moves the bucket at position index to new_index
@@ -79,14 +78,14 @@ class Versioner():
         return ver_ptr
 
 
-class OrderedList(list):
+class OrderedListComparison(list):
     '''Ordered-file-maintenance-based O(1) data structure'''
 
     # constructor
     def __init__(self, callback, versioner):
-        super(OrderedList, self).__init__([None, None])
+        super(OrderedListComparison, self).__init__([None, None])
         self.callback = callback  # call on (index, new_index) any time we move a BottomBucket from index to new_index
-        self.bucket_list = []  # TODO make this an O(log n) OrderedFileMaintenance thingy instead of a regular list
+        self.bucket_list = []
         self.count = 0
         self.versioner = versioner
 
