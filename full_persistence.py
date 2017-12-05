@@ -39,10 +39,7 @@ class FPNode():
         # reverse_pointers is a list that stores (node, field name) where this node is referenced
         self.fields[("__REVERSE_PTRS__")] = []
         self.mods = []  # mod is a tuple of (version, field, value)
-        # is_active becomes false when it overflows and splits into two nodes
-        # and should no longer have things pointing into or modifying it
-        self.is_active = True
-        self.children = (None, None)  # when no longer active, has children for earlier and later halves of mods
+        self.child = None  # when overflows, has a child for the thing after it
 
     # print for debugging
     def formatted(self):
@@ -63,8 +60,6 @@ class FPNode():
     # returns None if it's not in the fields or mods
     # if version is older than anything in this node, throws an error
     def get_field(self, name, version):
-        if not self.is_active:
-            raise Exception("Attempting to get value from inactive node.")
         if (version < self.earliest_version):
             raise Exception("Cannot get a field from a node at a version earlier than its earliest version.")
         for mod in self.mods[::-1]:
@@ -76,14 +71,11 @@ class FPNode():
     # returns the VersionPtr for the new version created by this modification
     def set_field(self, name, value, version):
         # check for an overflow in progress
-        if len(self.mods) >= 2*(d+p+1) or not self.is_active:
-            leftchild, rightchild = self.children
-            if leftchild is None or rightchild is None:
+        if len(self.mods) >= 2*(d+p+1):
+            if self.child is None:
                 raise Exception("Node has overflowed but doesn't have children to move to.")
-            if version < rightchild.earliest_version:
-                return leftchild.set_field(name, value, version)
-            else:
-                return rightchild.set_field(name, value, version)
+            if version >= self.child.earliest_version:
+                return self.child.set_field(name, value, version)
 
         # create the modification
         old_value = self.get_field(name, version)
@@ -112,30 +104,22 @@ class FPNode():
         self.mods = sorted(self.mods, key=lambda x: x[0])
         mid_mod = self.mods[len(self.mods)//2]
         mid_version = mid_mod[0]
-        leftchild = FPNode(self.name+"L", self.parent, self.earliest_version)
         rightchild = FPNode(self.name+"R", self.parent, mid_version)
-        self.children = (leftchild, rightchild)
+        self.child = rightchild
 
         # set values of child fields
-        leftchild.fields = self.fields.copy()
-        leftchild.mods = self.mods[:len(self.mods)//2]
         rightchild.fields = self.fields.copy()
         rightchild.mods = self.mods[len(self.mods)//2:]
-        for _, name, val in self.mods[:len(self.mods)//2]:
+        self.mods = self.mods[:len(self.mods)//2]
+        for _, name, val in self.mods:  # mods in the older half applied to newer half
             rightchild.fields[name] = val
 
         # pointer chasing time!
         # go through every initial-field and mod, change revptrs
-        for version, name, val in self.mods:
+        for version, name, val in rightchild.mods:
             # directly change revptrs for mods
             if type(val) is FPNode:
-                child = leftchild if version < mid_version else rightchild
-                val._update_reverse_pointer(self, child, name, version)
-        for name in self.fields.keys():
-            # directly change revptrs for fields
-            val = self.fields[name]
-            if type(val) is FPNode:
-                val._update_reverse_pointer(self, leftchild, name, self.earliest_version)
+                val._update_reverse_pointer(self, rightchild, name, version)
         for name in rightchild.fields.keys():
             # use mods to add revptrs for newly created additional fields pointing into it from new child
             val = rightchild.fields[name]
@@ -146,16 +130,12 @@ class FPNode():
         for from_node, field_name in self._get_revptrs(mid_version):
             # use mods to add forward pointers after mid_version to rightchild instead of left child
             from_node.set_field(field_name, rightchild, mid_version)
-        for from_node, field_name in self._get_revptrs(self.earliest_version):
-            # directly change forward pointers corresponding to revptr-field
-            from_node.fields[field_name] = leftchild
-        for version, name, val in self.mods:
+        for version, name, val in rightchild.mods:
             # directly change forward pointers corresponding to revptr modifications
             if name == "__REVERSE__PTRS__":
                 possibly_just_added_node, field_name = val[-1] # we actually don't know if this modification was an addition or a deletion, so check if it equals this node
                 if (possibly_just_added_node.get_field(field_name, version) == self):
-                    child = leftchild if version < mid_version else rightchild
-                    possibly_just_added_node._update_forward_pointer(self, child, field_name, version)
+                    possibly_just_added_node._update_forward_pointer(self, rightchild, field_name, version)
         return
 
 
