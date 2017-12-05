@@ -152,6 +152,7 @@ class TestFullPersistence(unittest.TestCase):
         for i, version in versions:
             val = node0.get_field("val0", version)
             self.assertEqual(i, val)
+            #print(i, val)
 
 
 if __name__ == '__main__':

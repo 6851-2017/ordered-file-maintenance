@@ -157,7 +157,8 @@ class FPNode():
     # remove reverse pointer
     def _remove_reverse_pointer(self, from_node, field_name, version):
         revptrs = list(self._get_revptrs(version))
-        revptrs.remove((from_node, field_name))
+        if ((from_node, field_name) in revptrs):
+            revptrs.remove((from_node, field_name))
         self.set_field("__REVERSE_PTRS__", revptrs, version)
 
     # manually replace pointers to go to newly created nodes and not reference the obsoletified ones
