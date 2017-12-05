@@ -62,6 +62,8 @@ class FPNode():
     def get_field(self, name, version):
         if (version < self.earliest_version):
             raise Exception("Cannot get a field from a node at a version earlier than its earliest version.")
+        if (self.child and not version < self.child.earliest_version):
+            return self.child.get_field(name, version)
         for mod in self.mods[::-1]:
             if mod[1] == name and not mod[0] > version:
                 return mod[2]
@@ -70,6 +72,8 @@ class FPNode():
     # modify a field value (add a mod if not full, split node if it is) right after the given version
     # returns the VersionPtr for the new version created by this modification
     def set_field(self, name, value, version):
+        if (version < self.earliest_version):
+            raise Exception("Cannot set a field at a version (%s) earlier than a node's earliest version (%s)." % (version, self.earliest_version))
         # check for an overflow in progress
         if len(self.mods) >= 2*(d+p+1):
             if self.child is None:
@@ -100,10 +104,14 @@ class FPNode():
     # then once they're set up, do a bunch of pointer chasing
     def _overflow(self):
         # amend old node to have children
-        self.mods = sorted(self.mods, key=lambda x: x[0])
-        mid_mod = self.mods[len(self.mods)//2]
-        mid_version = mid_mod[0]
+        self.mods = sorted(self.mods, key=lambda x: x[0].get_index())
+        #print("self.mods=")
+        #print(self.mods)
+        mid_version = self.mods[len(self.mods)//2][0]
+        #print(mid_version)
         rightchild = FPNode(self.name+"R", self.parent, mid_version)
+        #print(rightchild.earliest_version)
+        rightchild.child = self.child
         self.child = rightchild
 
         # set values of child fields
@@ -128,6 +136,8 @@ class FPNode():
         # then go through all the revptrs and update their things' forward pointers
         for from_node, field_name in rightchild._get_revptrs(mid_version):
             # use mods to add forward pointers after mid_version to rightchild instead of left child
+            print("Setting field: ", field_name, rightchild, mid_version)
+            print("Earliest: ", rightchild.earliest_version)
             from_node.set_field(field_name, rightchild, mid_version)
         for version, name, val in rightchild.mods:
             # directly change forward pointers corresponding to revptr modifications

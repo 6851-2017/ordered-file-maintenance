@@ -147,6 +147,7 @@ class TestFullPersistence(unittest.TestCase):
         versions = []
         for i in range(30):
             version = node0.set_field("val0", i, version)
+            #print(i, version)
             versions.append((i, version))
 
         for i, version in versions:

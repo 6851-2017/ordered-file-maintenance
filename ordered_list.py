@@ -6,7 +6,15 @@
 
 import math
 
-W = 64  # machine word size
+W = 16  # machine word size, TODO swap to 64
+B = 4 # for printing only
+
+def binary_string(index):
+    ret = ""
+    for _ in range(W+B):
+        ret = str(index % 2) + ret
+        index = index // 2
+    return ret
 
 
 class VersionPtr():
@@ -38,7 +46,10 @@ class VersionPtr():
 
     # string format
     def __str__(self):
-        return "<VersionPtr at index %s>" % self.index
+        return "<VersionPtr at index %s>" % binary_string(self.get_index())
+
+    def __repr__(self):
+        return "<VP %s>" % binary_string(self.get_index())
 
 
 class Versioner():
@@ -150,7 +161,7 @@ class BottomBucket():
 
     # split into two bottom buckets by scanning and moving the second half, insert the second after the first in the parent
     def split(self):
-        print("SPLITTING; self.count=%s" % self.count)
+        #print("SPLITTING; self.count=%s" % self.count)
         ver_ptr = self.first_ptr
         last_first_half = None
         for i in range(self.count//2):
