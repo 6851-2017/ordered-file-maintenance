@@ -151,7 +151,7 @@ class FPNode():
     def _add_reverse_pointer(self, from_node, field_name, version):
         revptrs = list(self._get_revptrs(version))
         revptrs.append((from_node, field_name))
-        assert len(revptrs) <= p
+        # assert len(revptrs) <= p  # removed for testing, TODO add back
         self.set_field("__REVERSE_PTRS__", revptrs, version)
 
     # remove reverse pointer

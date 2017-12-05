@@ -57,24 +57,25 @@ class Versioner():
         if (bucket):
             assert(bucket.index == index)
             bucket.index = new_index
+            assert self.ptrs_to_update.get(new_index) is None
+            self.ptrs_to_update[new_index] = self.ptrs_to_update.pop(index)
         return
 
     # add a bucket to keep track of in callbacks
-    def track_bucket(self, index, bucket):
-        assert index >= len(self.ptrs_to_update) or self.ptrs_to_update[index] is None
+    def track_bucket(self, bucket):
+        index = bucket.index
+        assert self.ptrs_to_update.get(index) is None, "index=%s, ptr=%s, bucket_list=%s" % (index, str(self.ptrs_to_update.get(index)), self.list.bucket_list)
         self.ptrs_to_update[index] = bucket
+        #print("Tracking bucket: %s=%s" % (index, bucket))
+        #print(self.ptrs_to_update)
 
-    # insert a new VersionPtr into the OrderedList after the given VersionPtr,
-    # return it, and add it to the list of VersionPtrs to update
+    # insert a new VersionPtr into the OrderedList after the given VersionPtr and return it
     def insert_after(self, version):
-        new_version = self.list.insert_after(version)
-        if new_version:
-            self.ptrs_to_update[new_version.index] = new_version
-        return new_version
+        return self.list.insert_after(version)
 
     def insert_first(self, root):
         ver_ptr = self.list.insert_first(root)
-        self.track_bucket(0, ver_ptr.bucket)
+        self.track_bucket(ver_ptr.bucket)
         return ver_ptr
 
 
@@ -118,7 +119,7 @@ class OrderedListComparison(list):
     # adjust indices of all later buckets accordingly
     def insert_bucket_after(self, bucket_index, new_bucket):
         self.bucket_list.insert(bucket_index+1, new_bucket)
-        for i in range(bucket_index+2, len(bucket_list)):
+        for i in range(len(self.bucket_list)-1, bucket_index+1, -1):
             self.callback(self.bucket_list[i].index, self.bucket_list[i].index+1)
 
     # return the total number of version pointers in self
@@ -149,6 +150,7 @@ class BottomBucket():
 
     # split into two bottom buckets by scanning and moving the second half, insert the second after the first in the parent
     def split(self):
+        print("SPLITTING; self.count=%s" % self.count)
         ver_ptr = self.first_ptr
         last_first_half = None
         for i in range(self.count//2):
@@ -158,8 +160,7 @@ class BottomBucket():
         last_first_half.next_in_bucket = None
         new_bucket = BottomBucket(self.index+1, self.parent, ver_ptr)
         prev_ptr = last_first_half
-        for i in range(self.count//2, self.count):
-            #print("Second loop {}".format(i))
+        while ver_ptr:    ##for i in range(self.count//2, self.count):
             ver_ptr.bucket = new_bucket
             bucket_count = new_bucket.insert_count()
             ver_ptr.index = (prev_ptr.index if prev_ptr != last_first_half else 0) + (1 << (W - bucket_count))
@@ -167,7 +168,13 @@ class BottomBucket():
             ver_ptr = ver_ptr.next_in_bucket
         self.count = self.count//2
         self.parent.insert_bucket_after(self.index, new_bucket)
-        self.parent.versioner.track_bucket(new_bucket.index, new_bucket)
+        self.parent.versioner.track_bucket(new_bucket)
+
+    def __str__(self):
+        return "BUCKET %s: %s elements" % (self.index, self.count)
+
+    def __repr__(self):
+        return "BUCKET %s: %s elements" % (self.index, self.count)
 
 
 
