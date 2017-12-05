@@ -100,7 +100,6 @@ class FPNode():
     # then once they're set up, do a bunch of pointer chasing
     def _overflow(self):
         # amend old node to have children
-        self.is_active = False
         self.mods = sorted(self.mods, key=lambda x: x[0])
         mid_mod = self.mods[len(self.mods)//2]
         mid_version = mid_mod[0]
@@ -127,7 +126,7 @@ class FPNode():
                 val._add_reverse_pointer(rightchild, name, mid_version)
 
         # then go through all the revptrs and update their things' forward pointers
-        for from_node, field_name in self._get_revptrs(mid_version):
+        for from_node, field_name in rightchild._get_revptrs(mid_version):
             # use mods to add forward pointers after mid_version to rightchild instead of left child
             from_node.set_field(field_name, rightchild, mid_version)
         for version, name, val in rightchild.mods:
@@ -157,7 +156,8 @@ class FPNode():
     # remove reverse pointer
     def _remove_reverse_pointer(self, from_node, field_name, version):
         revptrs = list(self._get_revptrs(version))
-        revptrs.remove((from_node, field_name))
+        if ((from_node, field_name) in revptrs):
+            revptrs.remove((from_node, field_name))
         self.set_field("__REVERSE_PTRS__", revptrs, version)
 
     # manually replace pointers to go to newly created nodes and not reference the obsoletified ones
