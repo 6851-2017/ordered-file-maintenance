@@ -3,7 +3,6 @@
 # TODOs:
 # stuff below
 # change bucket_list to OFM not list
-# do we need callbacks anywhere?
 
 import math
 
@@ -48,7 +47,7 @@ class Versioner():
 
     # constructor
     def __init__(self):
-        self.list = OrderedList(self.callback, self)
+        self.list = OrderedListComparison(self.callback, self)
         self.ptrs_to_update = {}  # map from index to Bucket; note only one Bucket should ever be created to that index
 
     # OrderedList should call this whenever it moves the bucket at position index to new_index
@@ -79,14 +78,14 @@ class Versioner():
         return ver_ptr
 
 
-class OrderedList(list):
+class OrderedListComparison(list):
     '''Ordered-file-maintenance-based O(1) data structure'''
 
     # constructor
     def __init__(self, callback, versioner):
-        super(OrderedList, self).__init__([None, None])
+        super(OrderedListComparison, self).__init__([None, None])
         self.callback = callback  # call on (index, new_index) any time we move a BottomBucket from index to new_index
-        self.bucket_list = []  # TODO make this an O(log n) OrderedFileMaintenance thingy instead of a regular list
+        self.bucket_list = []
         self.count = 0
         self.versioner = versioner
 
@@ -112,6 +111,7 @@ class OrderedList(list):
         ver_ptr.bucket = new_bucket
         self.bucket_list = [new_bucket]
         self.count += 1
+        print("Here", new_bucket)
         return ver_ptr
 
     # add a new bucket to the bucket_list after the specified position
@@ -142,7 +142,7 @@ class BottomBucket():
     # if too full, do a split and return None, user must redo since the version may have shifted buckets
     def insert_count(self):
         self.count += 1
-        if (self.count > W):
+        if (self.count >= W):
             self.split()
             return None
         return self.count
@@ -152,14 +152,16 @@ class BottomBucket():
         ver_ptr = self.first_ptr
         last_first_half = None
         for i in range(self.count//2):
+            #print("First loop {}".format(i))
             last_first_half = ver_ptr
             ver_ptr = ver_ptr.next_in_bucket
         last_first_half.next_in_bucket = None
         new_bucket = BottomBucket(self.index+1, self.parent, ver_ptr)
         prev_ptr = last_first_half
         for i in range(self.count//2, self.count):
+            #print("Second loop {}".format(i))
             ver_ptr.bucket = new_bucket
-            bucket_count = self.insert_count()
+            bucket_count = new_bucket.insert_count()
             ver_ptr.index = (prev_ptr.index if prev_ptr != last_first_half else 0) + (1 << (W - bucket_count))
             prev_ptr = ver_ptr
             ver_ptr = ver_ptr.next_in_bucket
