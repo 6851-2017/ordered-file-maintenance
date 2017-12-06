@@ -1,6 +1,6 @@
 # jamb, rusch 6.851 Fall 2017
 
-from ordered_list import Versioner, VersionPtr
+from ordered_list import OrderedList, OrderedListComparison, VersionPtr
 
 d = 3  # max number of outgoing pointers allowed for any object
 p = 3  # max number of pointers allowed to any object
@@ -14,7 +14,7 @@ class FPPM():
 
     # constructor
     def __init__(self):
-        self.versioner = Versioner()
+        self.versioner = OrderedList()
         new_root = FPRoot(self, None)
         self.first_version = self.versioner.insert_first(new_root)
         new_root.earliest_version = self.first_version
@@ -72,12 +72,14 @@ class FPNode():
     # modify a field value (add a mod if not full, split node if it is) right after the given version
     # returns the VersionPtr for the new version created by this modification
     # also puts the undo of this modification immediately after
-    def set_field(self, name, value, version):
+    def set_field(self, name, value, version, version_name=""):
         if (version < self.earliest_version):
             raise Exception("Cannot set a field at a version (%s) earlier than a node's earliest version (%s)." % (version, self.earliest_version))
         old_value = self.get_field(name, version)
         done_version = self._set_field_helper(name, value, version)
+        done_version.version_name = "(" + version_name
         undone_version = self._set_field_helper(name, old_value, done_version)
+        undone_version.version_name = version_name + ")"
         return done_version
 
     # PRIVATE METHODS

@@ -139,7 +139,7 @@ class TestFullPersistence(unittest.TestCase):
         ffpm = FPPM()
         root = ffpm.get_root(ffpm.first_version)
         node0 = FPNode("n0", ffpm, ffpm.first_version)
-        v0 = root.set_field("node", node0, ffpm.first_version)
+        v0 = root.set_field("node", node0, ffpm.first_version, "v")
         #print(root.formatted())
         #print("v0=",v0)
 
@@ -147,16 +147,15 @@ class TestFullPersistence(unittest.TestCase):
             n0 = ffpm.get_root(v0).get_field("node", v0)
             #if (i <= 7):
 #                print(n0.formatted())
-            v1 = n0.set_field("val0", 0, v0)
+            v1 = n0.set_field("val0", 0, v0, "%s" % i)
             #print("v1=", v1)
 
         version = v0
         versions = []
         for i in range(30):
             n0 = ffpm.get_root(version).get_field("node", version)
-            version = n0.set_field("val0", i, version)
-            #if (i <= 7):
-                #print(n0.formatted())
+            version = n0.set_field("val0", i, version, "%s" % i)
+            print(ffpm.versioner.bucket_list.parenth_version_format())
             versions.append((i, version))
 
         for i, version in versions:
