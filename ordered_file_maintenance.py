@@ -73,7 +73,6 @@ class DSPointerList:
 
     def is_before(self, node1, node2):
         return self.node_index_map[node1] < self.node_index_map[node2]
-            
 
 
 # represent a file with this behind-the-scenes thing that keeps elements O(1) apart and takes only O(log^2(n)) updates
@@ -111,6 +110,7 @@ class OrderedFile(list):
 
     # add the element elem to the array after position pos, rewriting as needed to make space
     # return nothing; modify the array in place
+    # TODO Add middle log level
     def insert(arr, elem, pos):
         if pos > len(arr):
             raise ValueError("attempted inserting past the end of the array")
@@ -190,7 +190,7 @@ class OrderedFile(list):
         count = next_pos - i
         assert count <= j-i
         return count
-    
+
     # rewrites all elements from i to j-1 to be evenly spread across the interval and return nothing
     # also inserts elem at the specified position while it's rewriting
     # TODO make this more in-place
@@ -207,4 +207,4 @@ class OrderedFile(list):
         return
 
 
-    
+
