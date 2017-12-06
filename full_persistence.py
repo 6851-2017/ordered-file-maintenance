@@ -25,7 +25,6 @@ class FPPM():
 
 
 # TODOs:
-# are we doing the do-and-undo thing??
 # omg we need a less inefficient way to store reverse pointers than a list of pairs that we rewrite with every change
 
 class FPNode():
@@ -72,9 +71,20 @@ class FPNode():
 
     # modify a field value (add a mod if not full, split node if it is) right after the given version
     # returns the VersionPtr for the new version created by this modification
+    # also puts the undo of this modification immediately after
     def set_field(self, name, value, version):
         if (version < self.earliest_version):
             raise Exception("Cannot set a field at a version (%s) earlier than a node's earliest version (%s)." % (version, self.earliest_version))
+        old_value = self.get_field(name, version)
+        done_version = self._set_field_helper(name, value, version)
+        undone_version = self._set_field_helper(name, old_value, done_version)
+        return done_version
+
+    # PRIVATE METHODS
+
+    # modify a field value (add a mod if not full, split node if it is) right after the given version
+    # returns the VersionPtr for the new version created by this modification
+    def _set_field_helper(self, name, value, version):
         # check for an overflow in progress
         if len(self.mods) >= 2*(d+p+1):
             if self.child is None:
@@ -98,8 +108,6 @@ class FPNode():
             value._add_reverse_pointer(self, name, version)
 
         return new_version
-
-    # PRIVATE METHODS
 
     # return a child object of the same type
     def _make_child(self, mid_version):
