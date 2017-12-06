@@ -25,6 +25,7 @@ class FPPM():
 # TODOs:
 # when we split it seems like we should make just one new and not both new for efficiency
 # overflow is a mess and almost certainly has bugs / wrong logic somewhere
+# are we doing the do-and-undo thing??
 # omg we need a less inefficient way to store reverse pointers than a list of pairs that we rewrite with every change
 
 class FPNode():
@@ -138,7 +139,11 @@ class FPNode():
             # use mods to add forward pointers after mid_version to rightchild instead of left child
             print("Setting field: ", field_name, rightchild, mid_version)
             print("Earliest: ", rightchild.earliest_version)
-            from_node.set_field(field_name, rightchild, mid_version)
+            if (mid_version < from_node.earliest_version):
+                # it should effectively point to rightchild all along
+                from_node.fields[field_name] = rightchild
+            else:
+                from_node.set_field(field_name, rightchild, mid_version)
         for version, name, val in rightchild.mods:
             # directly change forward pointers corresponding to revptr modifications
             if name == "__REVERSE__PTRS__":
