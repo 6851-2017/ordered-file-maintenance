@@ -140,8 +140,11 @@ class OrderedFile(list):
 
             if block_density <= max_density:
                 # yay! we can stop at this level
-                ##interval = arr._collapse(start, end, elem, pos)
-                arr._even_spread(start, end, elem, pos)
+                print("i=%s, j=%s" % (start, end))
+                count = arr._collapse(start, end, elem, pos)
+                print("Collapsed Arr=", arr)
+                arr._even_spread(start, end, count)
+                print("Spread Arr=", arr)
                 return
 
             # in this case, this level isn't good enough and we need to iterate and rewrite at a higher level
@@ -166,32 +169,35 @@ class OrderedFile(list):
     # collapse the interval from i to j, clumping elements to the left of it
     # if j > len(arr), just go to end of array
     # meanwhile insert (or delete if deleting) elem after (at) pos
-##    def _collapse(arr, i, j, elem, pos, deleting=False):
-##        j = min(j, len(arr))
-##        interval = (arr[i:pos]+arr[pos+1:j]) if deleting else (arr[i:pos+1] + [elem] + arr[pos+1:j])
-##        return interval
-
-    # rewrites all elements from i to j-1 to be evenly spread across the interval and return nothing
-    # also inserts elem at the specified position while it's rewriting
-    # also does things collapsing should do, except deleting doesn't work TODO
-    def _even_spread(arr, i, j, elt, pos, deleting=False):
+    # TODO deleting doesn't work
+    # return the count of elements collapsed
+    def _collapse(arr, i, j, elem, pos, deleting=False):
         next_pos=i
         for index in range(i,j):
+            assert next_pos <= index
             if arr[index] is not None:
-                arr[next_pos] = index
+                temp = arr[index]
+                arr[index] = None
+                arr[next_pos] = temp
                 arr.callback(index, next_pos)
                 next_pos += 1
             if index == pos:
-                arr[next_pos] = elt
+                arr[next_pos] = elem
                 next_pos += 1
         count = next_pos - i
         assert count <= j-i
-        elems = arr[i:next_pos]
+        return count
+    
+    # rewrites all elements from i to j-1 to be evenly spread across the interval and return nothing
+    # also inserts elem at the specified position while it's rewriting
+    # TODO make this more in-place
+    def _even_spread(arr, i, j, count):
         arr[i:j] = [None]*(j-i)
         newIndices = [i + (k*(j-i))//count for k in range(count)]
-        for i in range(count):
-            elem = elems[i]
-            index = newIndices[i]
+        for it in range(count-1, -1, -1):
+            elem = arr[i+it]
+            index = newIndices[it]  # i + (it*(j-i))//count
+            arr[i+it] = None
             arr[index] = elem
             arr.callback(i, index)
         return

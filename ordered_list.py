@@ -230,6 +230,9 @@ class BottomBucket():
         self.parent.insert_bucket_after(self.index, new_bucket)
         self.parent.versioner.track_bucket(new_bucket)
 
+    def set_index(self, index):
+        self.index = index
+
     def __str__(self):
         return "BUCKET %s: %s elements" % (self.index, self.count)
 
