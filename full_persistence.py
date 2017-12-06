@@ -17,7 +17,7 @@ class FPPM():
         self.versioner = Versioner()
         new_root = FPRoot(self, None)
         self.first_version = self.versioner.insert_first(new_root)
-        new_root.version = self.first_version
+        new_root.earliest_version = self.first_version
 
     # returns the root FPNode at the given VersionPtr
     def get_root(self, version):

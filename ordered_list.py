@@ -124,7 +124,6 @@ class OrderedListComparison(list):
         ver_ptr.bucket = new_bucket
         self.bucket_list = [new_bucket]
         self.count += 1
-        print("Here", new_bucket)
         return ver_ptr
 
     # add a new bucket to the bucket_list after the specified position
