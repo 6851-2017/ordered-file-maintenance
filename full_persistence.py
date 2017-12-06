@@ -101,13 +101,17 @@ class FPNode():
 
     # PRIVATE METHODS
 
+    # return a child object of the same type
+    def _make_child(self, mid_version):
+        return FPNode(self.name, self.parent, mid_version)
+
     # create two new nodes with the first and second half of mods, make them the children
     # then once they're set up, do a bunch of pointer chasing
     def _overflow(self):
         # amend old node to have children
         self.mods = sorted(self.mods, key=lambda x: x[0].get_index())
         mid_version = self.mods[len(self.mods)//2][0]
-        rightchild = FPNode(self.name, self.parent, mid_version)
+        rightchild = self._make_child(mid_version)
         rightchild.child = self.child
         self.child = rightchild
 
@@ -122,12 +126,12 @@ class FPNode():
         # go through every initial-field and mod, change revptrs
         for version, name, val in rightchild.mods:
             # directly change revptrs for mods
-            if type(val) is FPNode:
+            if type(val) is FPNode or type(val) is FPRoot:  # TODO is the second necessary?
                 val._update_reverse_pointer(self, rightchild, name, version)
         for name in rightchild.fields.keys():
             # use mods to add revptrs for newly created additional fields pointing into it from new child
             val = rightchild.fields[name]
-            if type(val) is FPNode:
+            if type(val) is FPNode or type(val) is FPRoot:  # TODO is the second necessary?
                 val._add_reverse_pointer(rightchild, name, mid_version)
 
         # then go through all the revptrs and update their things' forward pointers
@@ -194,6 +198,9 @@ class FPRoot(FPNode):
         super(FPRoot, self).__init__("__ROOT__", parent, version)
         self.version_ptrs = []
 
+    def _make_child(self, mid_version):
+        return FPRoot(self.parent, mid_version)
+
     def add_version_pointer(self, version):
         self.version_ptrs.append(version)
 
@@ -206,7 +213,7 @@ class FPRoot(FPNode):
                 old_ptrs.append(version)
             else:
                 new_ptrs.append(version)
-                version.root = self.child
+                version.root = self.child  # TODO verify that this is always an FPRoot object?
         self.version_ptrs = old_ptrs
         self.child.version_ptrs = new_ptrs
         return
