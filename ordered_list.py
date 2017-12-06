@@ -76,7 +76,7 @@ class Versioner():
         bucket = self.ptrs_to_update.get(index)
         if bucket:
             assert bucket.index == index
-            bucket.index = new_index
+            bucket.set_index(new_index)
             assert self.ptrs_to_update.get(new_index) is None
             self.ptrs_to_update[new_index] = self.ptrs_to_update.pop(index)
         return
@@ -231,7 +231,7 @@ class BottomBucket():
             ver_ptr = ver_ptr.next_in_bucket
         self.count = self.count//2
         self.parent.insert_bucket_after(self.index, new_bucket)
-        self.parent.versioner.track_bucket(new_bucket)
+        ##self.parent.versioner.track_bucket(new_bucket)
 
     def set_index(self, index):
         self.index = index

@@ -140,12 +140,14 @@ class OrderedFile(list):
 
             if block_density <= max_density:
                 # yay! we can stop at this level
-                print("\ni=%s, j=%s" % (start, end))
-                print("Arr=", arr)
+                ##print("\ni=%s, j=%s" % (start, end))
+                ##print("Arr=", arr)
+                ##print("\t adding ", elem)
                 count = arr._collapse(start, end, elem, pos)
-                print("Collapsed Arr=", arr)
+                ##print("Collapsed Arr=", arr)
+                ##print("\t count ", count)
                 arr._even_spread(start, end, count)
-                print("Spread Arr=", arr)
+                ##print("Spread Arr=", arr)
                 return
 
             # in this case, this level isn't good enough and we need to iterate and rewrite at a higher level
@@ -175,14 +177,18 @@ class OrderedFile(list):
         temp_i_plus_one = arr[i]
         arr[i] = None
         for index in range(i,j):
+            # get the value for the next round, since we might overwrite it this round
             assert next_pos <= index+1
             temp_i_val = temp_i_plus_one
             if index + 1 < j:
                 temp_i_plus_one = arr[index+1]
                 arr[index+1] = None
+
+            # now look at this round's stored value and collapse it
             if temp_i_val is not None:
                 arr[next_pos] = temp_i_val
-                arr.callback(index, next_pos)
+                ##arr.callback(index, next_pos)
+                temp_i_val.set_index(next_pos)
                 next_pos += 1
             if index == pos:
                 arr[next_pos] = elem
@@ -196,14 +202,15 @@ class OrderedFile(list):
     # TODO make this more in-place
     def _even_spread(arr, i, j, count):
         newIndices = [i + (k*(j-i))//count for k in range(count)]
-        print("Indices=", newIndices)
+        ##print("Indices=", newIndices)
         for it in range(count-1, -1, -1):
             elem = arr[i+it]
             index = newIndices[it]  # i + (it*(j-i))//count
             arr[i+it] = None
             arr[index] = elem
-            print("\t it=%s i+it=%s index=%s elem=%s" % (it, i+it, index, elem))
-            arr.callback(i+it, index)
+            ##print("\t it=%s i+it=%s index=%s elem=%s" % (it, i+it, index, elem))
+            ##arr.callback(i+it, index)
+            elem.set_index(index)
         return
 
 
