@@ -140,7 +140,7 @@ class OrderedFile(list):
 
             if block_density <= max_density:
                 # yay! we can stop at this level
-                print("i=%s, j=%s" % (start, end))
+                print("\ni=%s, j=%s" % (start, end))
                 count = arr._collapse(start, end, elem, pos)
                 print("Collapsed Arr=", arr)
                 arr._even_spread(start, end, count)
@@ -162,9 +162,6 @@ class OrderedFile(list):
         n = len(arr)
         #print("n=%s" % n)
         return int((n-1)/(2**level * math.log(n, 2)))+1
-
-
-    # TODO write the below two to be in-place and call self.callback on every moved element
 
     # collapse the interval from i to j, clumping elements to the left of it
     # if j > len(arr), just go to end of array
@@ -192,14 +189,15 @@ class OrderedFile(list):
     # also inserts elem at the specified position while it's rewriting
     # TODO make this more in-place
     def _even_spread(arr, i, j, count):
-        arr[i:j] = [None]*(j-i)
         newIndices = [i + (k*(j-i))//count for k in range(count)]
+        print("Indices=", newIndices)
         for it in range(count-1, -1, -1):
             elem = arr[i+it]
             index = newIndices[it]  # i + (it*(j-i))//count
             arr[i+it] = None
             arr[index] = elem
-            arr.callback(i, index)
+            print("\t it=%s i+it=%s index=%s elem=%s" % (it, i+it, index, elem))
+            arr.callback(i+it, index)
         return
 
 

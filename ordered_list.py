@@ -70,9 +70,12 @@ class Versioner():
     # OrderedList should call this whenever it moves the bucket at position index to new_index
     # returns nothing
     def callback(self, index, new_index):
+        if index == new_index:
+            # don't need to do anything
+            return
         bucket = self.ptrs_to_update.get(index)
-        if (bucket):
-            assert(bucket.index == index)
+        if bucket:
+            assert bucket.index == index
             bucket.index = new_index
             assert self.ptrs_to_update.get(new_index) is None
             self.ptrs_to_update[new_index] = self.ptrs_to_update.pop(index)
