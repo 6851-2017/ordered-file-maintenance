@@ -141,6 +141,7 @@ class OrderedFile(list):
             if block_density <= max_density:
                 # yay! we can stop at this level
                 print("\ni=%s, j=%s" % (start, end))
+                print("Arr=", arr)
                 count = arr._collapse(start, end, elem, pos)
                 print("Collapsed Arr=", arr)
                 arr._even_spread(start, end, count)
@@ -170,12 +171,17 @@ class OrderedFile(list):
     # return the count of elements collapsed
     def _collapse(arr, i, j, elem, pos, deleting=False):
         next_pos=i
+        temp_i_val = None
+        temp_i_plus_one = arr[i]
+        arr[i] = None
         for index in range(i,j):
-            assert next_pos <= index
-            if arr[index] is not None:
-                temp = arr[index]
-                arr[index] = None
-                arr[next_pos] = temp
+            assert next_pos <= index+1
+            temp_i_val = temp_i_plus_one
+            if index + 1 < j:
+                temp_i_plus_one = arr[index+1]
+                arr[index+1] = None
+            if temp_i_val is not None:
+                arr[next_pos] = temp_i_val
                 arr.callback(index, next_pos)
                 next_pos += 1
             if index == pos:
