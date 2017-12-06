@@ -17,7 +17,6 @@ class TestFullPersistence(unittest.TestCase):
 
         # Setup node0 and node1
         node0 = FPNode("n0", ffpm, ffpm.first_version)
-        ffpm.first_version.root = node0
         node1 = FPNode("n1", ffpm, ffpm.first_version)
         node2 = FPNode("n2", ffpm, ffpm.first_version)
 
@@ -70,7 +69,6 @@ class TestFullPersistence(unittest.TestCase):
     def test_cycle(self):
         ffpm = FPPM()
         node0 = FPNode("n0", ffpm, ffpm.first_version)
-        ffpm.first_version.root = node0
         node1 = FPNode("n1", ffpm, ffpm.first_version)
         node2 = FPNode("n2", ffpm, ffpm.first_version)
 
@@ -92,7 +90,6 @@ class TestFullPersistence(unittest.TestCase):
     def test_tree(self):
         ffpm = FPPM()
         root = FPNode("root", ffpm, ffpm.first_version)
-        ffpm.first_version.root = root
 
         def recurse(node, d):
             global inc
@@ -114,7 +111,6 @@ class TestFullPersistence(unittest.TestCase):
     def test_self_pointing_overflow(self):
         ffpm = FPPM()
         node0 = FPNode("n0", ffpm, ffpm.first_version)
-        ffpm.first_version.root = node0
 
         # Point to self three times to fill up mods slots
         v1 = node0.set_field("p0", node0, ffpm.first_version)
@@ -138,7 +134,6 @@ class TestFullPersistence(unittest.TestCase):
     def test_set_many_values(self):
         ffpm = FPPM()
         node0 = FPNode("n0", ffpm, ffpm.first_version)
-        ffpm.first_version.root = node0
 
         for _ in range(30):
             v1 = node0.set_field("val0", 0, ffpm.first_version)

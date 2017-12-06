@@ -15,7 +15,9 @@ class FPPM():
     # constructor
     def __init__(self):
         self.versioner = Versioner()
-        self.first_version = self.versioner.insert_first(self)
+        new_root = FPRoot(self, None)
+        self.first_version = self.versioner.insert_first(new_root)
+        new_root.version = self.first_version
 
     # returns the root FPNode at the given VersionPtr
     def get_root(self, version):
@@ -24,7 +26,6 @@ class FPPM():
 
 # TODOs:
 # are we doing the do-and-undo thing??
-# fix roots
 # omg we need a less inefficient way to store reverse pointers than a list of pairs that we rewrite with every change
 
 class FPNode():
@@ -188,6 +189,30 @@ class FPNode():
         return
 
 
+class FPRoot(FPNode):
+    def __init__(self, parent, version):
+        super(FPRoot, self).__init__("__ROOT__", parent, version)
+        self.version_ptrs = []
 
+    def add_version_pointer(self, version):
+        self.version_ptrs.append(version)
+
+    def _overflow(self):
+        super(FPRoot, self)._overflow()
+        old_ptrs = []
+        new_ptrs = []
+        for version in self.version_ptrs:
+            if version < self.child.earliest_version:
+                old_ptrs.append(version)
+            else:
+                new_ptrs.append(version)
+                version.root = self.child
+        self.version_ptrs = old_ptrs
+        self.child.version_ptrs = new_ptrs
+        return
+            
+        
+
+    
 
 
