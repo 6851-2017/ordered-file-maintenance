@@ -15,7 +15,9 @@ class FPPM():
     # constructor
     def __init__(self):
         self.versioner = Versioner()
-        self.first_version = self.versioner.insert_first(self)
+        new_root = FPRoot(self, None)
+        self.first_version = self.versioner.insert_first(new_root)
+        new_root.earliest_version = self.first_version
 
     # returns the root FPNode at the given VersionPtr
     def get_root(self, version):
@@ -23,8 +25,6 @@ class FPPM():
 
 
 # TODOs:
-# when we split it seems like we should make just one new and not both new for efficiency
-# overflow is a mess and almost certainly has bugs / wrong logic somewhere
 # are we doing the do-and-undo thing??
 # omg we need a less inefficient way to store reverse pointers than a list of pairs that we rewrite with every change
 
@@ -101,17 +101,17 @@ class FPNode():
 
     # PRIVATE METHODS
 
+    # return a child object of the same type
+    def _make_child(self, mid_version):
+        return FPNode(self.name, self.parent, mid_version)
+
     # create two new nodes with the first and second half of mods, make them the children
     # then once they're set up, do a bunch of pointer chasing
     def _overflow(self):
         # amend old node to have children
         self.mods = sorted(self.mods, key=lambda x: x[0].get_index())
-        #print("self.mods=")
-        #print(self.mods)
         mid_version = self.mods[len(self.mods)//2][0]
-        #print(mid_version)
-        rightchild = FPNode(self.name+"R", self.parent, mid_version)
-        #print(rightchild.earliest_version)
+        rightchild = self._make_child(mid_version)
         rightchild.child = self.child
         self.child = rightchild
 
@@ -126,19 +126,17 @@ class FPNode():
         # go through every initial-field and mod, change revptrs
         for version, name, val in rightchild.mods:
             # directly change revptrs for mods
-            if type(val) is FPNode:
+            if type(val) is FPNode or type(val) is FPRoot:  # TODO is the second necessary?
                 val._update_reverse_pointer(self, rightchild, name, version)
         for name in rightchild.fields.keys():
             # use mods to add revptrs for newly created additional fields pointing into it from new child
             val = rightchild.fields[name]
-            if type(val) is FPNode:
+            if type(val) is FPNode or type(val) is FPRoot:  # TODO is the second necessary?
                 val._add_reverse_pointer(rightchild, name, mid_version)
 
         # then go through all the revptrs and update their things' forward pointers
         for from_node, field_name in rightchild._get_revptrs(mid_version):
             # use mods to add forward pointers after mid_version to rightchild instead of left child
-            print("Setting field: ", field_name, rightchild, mid_version)
-            print("Earliest: ", rightchild.earliest_version)
             if (mid_version < from_node.earliest_version):
                 # it should effectively point to rightchild all along
                 from_node.fields[field_name] = rightchild
@@ -195,6 +193,33 @@ class FPNode():
         return
 
 
+class FPRoot(FPNode):
+    def __init__(self, parent, version):
+        super(FPRoot, self).__init__("__ROOT__", parent, version)
+        self.version_ptrs = []
 
+    def _make_child(self, mid_version):
+        return FPRoot(self.parent, mid_version)
+
+    def add_version_pointer(self, version):
+        self.version_ptrs.append(version)
+
+    def _overflow(self):
+        super(FPRoot, self)._overflow()
+        old_ptrs = []
+        new_ptrs = []
+        for version in self.version_ptrs:
+            if version < self.child.earliest_version:
+                old_ptrs.append(version)
+            else:
+                new_ptrs.append(version)
+                version.root = self.child  # TODO verify that this is always an FPRoot object?
+        self.version_ptrs = old_ptrs
+        self.child.version_ptrs = new_ptrs
+        return
+            
+        
+
+    
 
 
