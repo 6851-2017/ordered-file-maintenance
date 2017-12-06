@@ -1,13 +1,11 @@
 # jamb, rusch 6.851 Fall 2017
 
-# TODOs:
-# stuff below
-# change bucket_list to OFM not list
+
 
 import math
 from ordered_file_maintenance import OrderedFile
 
-W = 16  # machine word size, TODO swap to 64
+W = 64  # machine word size
 B = 4 # for printing only
 
 def binary_string(index):
@@ -66,14 +64,12 @@ class OrderedListComparison(list):
         self.count = 0
 
     # insert a new VersionPtr into the list after the given VersionPtr and return it
-    # TODO how do we know what root to insert? should probably change at some point
     def insert_after(self, version):
         self.count += 1
         bucket_count = None
         while (bucket_count is None):
             bucket_count = version.bucket.insert_count()
         index = version.index + (1 << (W - bucket_count))
-        #print("INSERT after version %s: new version %s" % (version.index, index))
         new_ptr = VersionPtr(index, version.get_root(), version.bucket)
         new_ptr.next_in_bucket = version.next_in_bucket
         version.next_in_bucket = new_ptr
