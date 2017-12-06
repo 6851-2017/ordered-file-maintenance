@@ -140,8 +140,8 @@ class OrderedFile(list):
 
             if block_density <= max_density:
                 # yay! we can stop at this level
-                interval = arr._collapse(start, end, elem, pos)
-                arr._even_spread(start, end, interval)
+                ##interval = arr._collapse(start, end, elem, pos)
+                arr._even_spread(start, end, elem, pos)
                 return
 
             # in this case, this level isn't good enough and we need to iterate and rewrite at a higher level
@@ -166,21 +166,35 @@ class OrderedFile(list):
     # collapse the interval from i to j, clumping elements to the left of it
     # if j > len(arr), just go to end of array
     # meanwhile insert (or delete if deleting) elem after (at) pos
-    def _collapse(arr, i, j, elem, pos, deleting=False):
-        j = min(j, len(arr))
-        interval = (arr[i:pos]+arr[pos+1:j]) if deleting else (arr[i:pos+1] + [elem] + arr[pos+1:j])
-        return interval
+##    def _collapse(arr, i, j, elem, pos, deleting=False):
+##        j = min(j, len(arr))
+##        interval = (arr[i:pos]+arr[pos+1:j]) if deleting else (arr[i:pos+1] + [elem] + arr[pos+1:j])
+##        return interval
 
     # rewrites all elements from i to j-1 to be evenly spread across the interval and return nothing
     # also inserts elem at the specified position while it's rewriting
-    def _even_spread(arr, i, j, interval):
-        elems = [thing for thing in interval if thing is not None]
-        count = len(elems)
+    # also does things collapsing should do, except deleting doesn't work TODO
+    def _even_spread(arr, i, j, elt, pos, deleting=False):
+        next_pos=i
+        for index in range(i,j):
+            if arr[index] is not None:
+                arr[next_pos] = index
+                arr.callback(index, next_pos)
+                next_pos += 1
+            if index == pos:
+                arr[next_pos] = elt
+                next_pos += 1
+        count = next_pos - i
         assert count <= j-i
+        elems = arr[i:next_pos]
         arr[i:j] = [None]*(j-i)
         newIndices = [i + (k*(j-i))//count for k in range(count)]
-        for elem, index in zip(elems, newIndices):
+        for i in range(count):
+            elem = elems[i]
+            index = newIndices[i]
             arr[index] = elem
+            arr.callback(i, index)
+        return
 
 
     
