@@ -155,7 +155,7 @@ class TestFullPersistence(unittest.TestCase):
         for i in range(30):
             n0 = ffpm.get_root(version).get_field("node", version)
             version = n0.set_field("val0", i, version, "%s" % i)
-            print(ffpm.versioner.bucket_list.parenth_version_format())
+            #print(ffpm.versioner.bucket_list.parenth_version_format())
             versions.append((i, version))
 
         for i, version in versions:
