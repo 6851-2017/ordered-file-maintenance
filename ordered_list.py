@@ -6,7 +6,7 @@
 
 import math
 
-W = 16  # machine word size, TODO swap to 64
+W = 64  # machine word size, TODO swap to 64
 B = 4 # for printing only
 
 def binary_string(index):
