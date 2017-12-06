@@ -5,8 +5,9 @@
 # change bucket_list to OFM not list
 
 import math
+from ordered_file_maintenance import OrderedFile
 
-W = 64  # machine word size, TODO swap to 64
+W = 16  # machine word size, TODO swap to 64
 B = 4 # for printing only
 
 def binary_string(index):
@@ -47,7 +48,7 @@ class VersionPtr():
 
     # string format
     def __str__(self):
-        return "<VersionPtr at index %s>" % binary_string(self.get_index())
+        return "<VersionPtr at index %s--%s>" % (self.bucket.index, self.index)
 
     def __repr__(self):
         return "<VP %s>" % binary_string(self.get_index())
@@ -58,8 +59,12 @@ class Versioner():
         to maintain via a callback function.'''
 
     # constructor
-    def __init__(self):
-        self.list = OrderedListComparison(self.callback, self)
+    def __init__(self, mock=False):
+        self.list = None
+        if mock:
+            self.list = OrderedListComparison(self.callback, self)
+        else:
+            self.list = OrderedList(self.callback, self)
         self.ptrs_to_update = {}  # map from index to Bucket; note only one Bucket should ever be created to that index
 
     # OrderedList should call this whenever it moves the bucket at position index to new_index
@@ -85,6 +90,7 @@ class Versioner():
     def insert_after(self, version):
         return self.list.insert_after(version)
 
+    # insert something when currently empty
     def insert_first(self, root):
         ver_ptr = self.list.insert_first(root)
         self.track_bucket(ver_ptr.bucket)
@@ -92,7 +98,7 @@ class Versioner():
 
 
 class OrderedListComparison(list):
-    '''Ordered-file-maintenance-based O(1) data structure'''
+    '''MOCK EXAMPLE of ordered-file-maintenance-based data structure, not O(1)'''
 
     # constructor
     def __init__(self, callback, versioner):
@@ -110,6 +116,7 @@ class OrderedListComparison(list):
         while (bucket_count is None):
             bucket_count = version.bucket.insert_count()
         index = version.index + (1 << (W - bucket_count))
+        #print("INSERT after version %s: new version %s" % (version.index, index))
         new_ptr = VersionPtr(index, version.get_root(), version.bucket)
         new_ptr.next_in_bucket = version.next_in_bucket
         version.next_in_bucket = new_ptr
@@ -137,6 +144,48 @@ class OrderedListComparison(list):
     def get_count(self):
         return self.count
 
+
+class OrderedList():
+    '''The real one, with OFM.'''
+        # constructor
+    def __init__(self, callback, versioner):
+        # should call callback on (index, new_index) any time we move a BottomBucket from index to new_index
+        self.bucket_list = OrderedFile(callback)
+        self.count = 0
+        self.versioner = versioner
+
+    # insert a new VersionPtr into the list after the given VersionPtr and return it
+    # TODO how do we know what root to insert? should probably change at some point
+    def insert_after(self, version):
+        self.count += 1
+        bucket_count = None
+        while (bucket_count is None):
+            bucket_count = version.bucket.insert_count()
+        index = version.index + (1 << (W - bucket_count))
+        #print("INSERT after version %s: new version %s" % (version.index, index))
+        new_ptr = VersionPtr(index, version.get_root(), version.bucket)
+        new_ptr.next_in_bucket = version.next_in_bucket
+        version.next_in_bucket = new_ptr
+        return new_ptr
+
+    # same as insert_after except there's nothing in the list so it can't be after something
+    # pass in the root of the DS we're making an OL on
+    def insert_first(self, root):
+        ##assert len(self.bucket_list) == 0  # this probably isn't true for OFM
+        ver_ptr = VersionPtr(0, root, None)
+        new_bucket = BottomBucket(index=0, parent=self, first_elt=ver_ptr)
+        ver_ptr.bucket = new_bucket
+        self.bucket_list.insert(new_bucket, 0)
+        self.count += 1
+        return ver_ptr
+
+    # add a new bucket to the bucket_list after the specified position
+    def insert_bucket_after(self, bucket_index, new_bucket):
+        self.bucket_list.insert(new_bucket, bucket_index)
+
+    # return the total number of version pointers in self
+    def get_count(self):
+        return self.count
 
 
 class BottomBucket():

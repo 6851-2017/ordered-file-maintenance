@@ -2,7 +2,9 @@ import unittest
 from full_persistence import FPPM
 from full_persistence import FPNode
 
-# TODO test roots overflowing
+# TODO
+# test roots overflowing
+# test multiple fields
 
 # Hack to give each thing unique name
 inc = 0
@@ -50,7 +52,7 @@ class TestFullPersistence(unittest.TestCase):
         for _ in range(20):
             _version = node0.set_field("p0", node2, v1)
 
-        # Overflow from succesive versions
+        # Overflow from successive versions
         version = v1
         for _ in range(20):
             version = node0.set_field("p0", node2, version)
@@ -138,24 +140,30 @@ class TestFullPersistence(unittest.TestCase):
         root = ffpm.get_root(ffpm.first_version)
         node0 = FPNode("n0", ffpm, ffpm.first_version)
         v0 = root.set_field("node", node0, ffpm.first_version)
+        print(root.formatted())
+        print("v0=",v0)
 
-        for _ in range(30):
+        for i in range(30):
             n0 = ffpm.get_root(v0).get_field("node", v0)
+            #if (i <= 7):
+#                print(n0.formatted())
             v1 = n0.set_field("val0", 0, v0)
+            print("v1=", v1)
 
         version = v0
         versions = []
         for i in range(30):
             n0 = ffpm.get_root(version).get_field("node", version)
             version = n0.set_field("val0", i, version)
-            print(n0.formatted())
+            if (i <= 7):
+                print(n0.formatted())
             versions.append((i, version))
 
         for i, version in versions:
             n0 = ffpm.get_root(version).get_field("node", version)
             val = n0.get_field("val0", version)
-#            self.assertEqual(i, val)
-            print(i, val)
+            self.assertEqual(i, val)
+#            print(i, val)
 
 
 if __name__ == '__main__':
