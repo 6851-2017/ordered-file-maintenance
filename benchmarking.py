@@ -16,7 +16,7 @@ def timeit(f):
         t1 = time.process_time()
         ret = f(*args, **kwargs)
         t2 = time.process_time()
-        return ret, (t2 - t1)
+        return ret, t2 - t1
     return wrapper
 
 def asymptotic(xs, ns):
@@ -59,7 +59,7 @@ def earliest_history_sweep(root, n):
 def branching_history_sweep(root, n):
 
     def recurse(node, v, n):
-        if n <= 0:
+        if n <= 1:
             return None
 
         left_v = node.set_field("v0", n, v)
@@ -84,11 +84,11 @@ def random_history_sweep(root, n):
         node = node.get_field("p0", version)
 
 def linked_list():
-    ns1 = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048]
+    ns1 = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
 
     list_creation_ts = [create_linked_list(n)[1] for n in ns1]
 
-    ns2 = [1, 10, 100, 500, 1000]
+    ns2 = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
 
     linear_ts = []
     for n in ns2:
@@ -135,6 +135,8 @@ def linked_list():
 ### TREE STUFF #######
 ######################
 
+# Global accumulator for somer assertion testing
+
 @timeit
 def create_tree(n):
     # Initialize Fully Persitent Pointer Machine
@@ -142,9 +144,8 @@ def create_tree(n):
 
     # Setup node0 and node1
     root = FPNode("root", fppm, fppm.first_version)
-
     def recurse(node, name, n):
-        if n <= 0:
+        if n <= 1:
             return None
 
         left_n = FPNode(name + "L", fppm, node.earliest_version)
@@ -202,7 +203,7 @@ def branching_history_tree(root, nt):
         recurse(node.get_field("right", version))
 
     def recurse_ver(node, v, n):
-        if n <= 0:
+        if n <= 1:
             return None
 
         left_v = node.set_field("v0", n, v)
@@ -230,38 +231,40 @@ def random_history_tree(root, n):
     recurse(root)
 
 def tree():
-    ns1 = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048]
+    ns1 = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
 
     list_creation_ts = [create_tree(n)[1] for n in ns1]
 
-    ns2 = [1, 10, 100, 500, 1000]
+    ns2 = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
 
     linear_ts = []
     for n in ns2:
-        root, _ = create_tree(int(3e3))
+        root, _ = create_tree(int(2**11))
         root, _ = root
         linear_ts.append(linear_value_history_tree(root, n)[1])
 
     earliest_ts = []
     for n in ns2:
-        root, _ = create_tree(int(3e3))
+        root, _ = create_tree(int(2**11))
         root, _ = root
         earliest_ts.append(earliest_history_tree(root, n)[1])
 
     branching_ts = []
     for n in ns2:
-        root, _ = create_tree(int(3e3))
+        root, _ = create_tree(int(2**11))
         root, _ = root
         branching_ts.append(branching_history_tree(root, n)[1])
 
     random_ts = []
     for n in ns2:
-        root, _ = create_tree(int(3e3))
+        root, _ = create_tree(int(2**11))
         root, _ = root
         random_ts.append(random_history_tree(root, n)[1])
 
     print("========CREATION TIMES================")
-    print(asymptotic(list_creation_ts, ns1))
+    print(asymptotic(list_creation_ts,
+          [n - 1 if n % 2 == 0 else n for n in ns1])
+         )
     print()
     print("========LINEAR HISTORY CREATION=======")
     print(asymptotic(linear_ts, ns2))
