@@ -20,7 +20,8 @@ def timeit(f):
     return wrapper
 
 def asymptotic(xs, ns):
-    return [x / xs[0] / n for x, n in zip(xs, ns)]
+    xs = [str(x / xs[0] / n) for x, n in zip(xs, ns)]
+    return '\n'.join(xs)
 
 @timeit
 def create_linked_list(n):
@@ -84,11 +85,11 @@ def random_history_sweep(root, n):
         node = node.get_field("p0", version)
 
 def linked_list():
-    ns1 = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
+    ns1 = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
 
     list_creation_ts = [create_linked_list(n)[1] for n in ns1]
 
-    ns2 = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
+    ns2 = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
 
     linear_ts = []
     for n in ns2:
@@ -231,11 +232,11 @@ def random_history_tree(root, n):
     recurse(root)
 
 def tree():
-    ns1 = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
+    ns1 = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
 
     list_creation_ts = [create_tree(n)[1] for n in ns1]
 
-    ns2 = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
+    ns2 = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
 
     linear_ts = []
     for n in ns2:
