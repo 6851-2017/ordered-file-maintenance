@@ -15,9 +15,10 @@ class FPPM():
     # constructor
     def __init__(self):
         self.versioner = OrderedList()
-        new_root = FPRoot(self, None)
-        self.first_version = self.versioner.insert_first(new_root)
-        new_root.earliest_version = self.first_version
+        root = FPRoot(self, None)
+        self.first_version = self.versioner.insert_first(root)
+        root.earliest_version = self.first_version
+        self.all_version_ptrs_ever = [self.first_version]  # TODO delete this thing, just for testing
 
     # returns the root FPNode at the given VersionPtr
     def get_root(self, version):
@@ -45,6 +46,8 @@ class FPNode():
     def formatted(self):
         s = "\n" + str(self) + "\n"
         s += "PARENT: " + str(self.parent) + "\n"
+        s += "CHILD: " + str(self.child) + "\n"
+        s += "EARLIEST VERSION: " + str(self.earliest_version) + "\n"
         s += "FIELDS:\n"
         for f in self.fields.keys():
             s += "\t" + f + ": " + str(self.fields.get(f, self.earliest_version)) +"\n"
@@ -81,6 +84,8 @@ class FPNode():
         done_version.version_name = "(" + version_name
         undone_version = self._set_field_helper(name, old_value, done_version)
         undone_version.version_name = version_name + ")"
+        self.parent.all_version_ptrs_ever.append(done_version)
+        self.parent.all_version_ptrs_ever.append(undone_version)
         return done_version
 
     # PRIVATE METHODS
@@ -120,7 +125,7 @@ class FPNode():
     # then once they're set up, do a bunch of pointer chasing
     def _overflow(self):
         # amend old node to have children
-        self.mods = sorted(self.mods, key=lambda x: x[0].get_index())
+        self.mods = sorted(self.mods, key=lambda x: x[0])
         mid_version = self.mods[len(self.mods)//2][0]
         rightchild = self._make_child(mid_version)
         rightchild.child = self.child
@@ -197,6 +202,7 @@ class FPNode():
     def _update_forward_pointer(self, old_node, new_node, field_name, version):
         if version == self.earliest_version and self.fields[field_name] == old_node:
             self.fields[field_name] = new_node
+        self.mods = sorted(self.mods, key=lambda x: x[0])
         for i in range(len(self.mods)):
             vers, name, val = self.mods[i]
             if version == vers and field_name == name and val == old_node:

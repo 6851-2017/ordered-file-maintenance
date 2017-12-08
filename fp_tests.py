@@ -157,12 +157,62 @@ class TestFullPersistence(unittest.TestCase):
             version = n0.set_field("val0", i, version, "%s" % i)
 #            print(ffpm.versioner.bucket_list.parenth_version_format())
             versions.append((i, version))
+#        print(n0.formatted())
+#        print(ffpm.all_version_ptrs_ever)
 
         for i, version in versions:
             n0 = ffpm.get_root(version).get_field("node", version)
             val = n0.get_field("val0", version)
 #            self.assertEqual(i, val)
             print(i, val)
+
+
+    def test_set_not_as_many_values(self):
+        ffpm = FPPM()
+        root = ffpm.get_root(ffpm.first_version)
+        node0 = FPNode("n0", ffpm, ffpm.first_version)
+        v0 = root.set_field("node", node0, ffpm.first_version, "v")
+        #print(root.formatted())
+        #print("v0=",v0)
+
+        for i in range(5):
+            n0 = ffpm.get_root(v0).get_field("node", v0)
+            v1 = n0.set_field("val0", 0, v0, "%s" % i)
+
+        version = v0
+        versions = []
+        for i in range(5):
+            n0 = ffpm.get_root(version).get_field("node", version)
+            version = n0.set_field("val0", i, version, "%s" % i)
+            versions.append((i, version))
+
+        for i, version in versions:
+            n0 = ffpm.get_root(version).get_field("node", version)
+            val = n0.get_field("val0", version)
+            self.assertEqual(i, val)
+#            print(i, val)
+
+
+    def test_above_with_only_root(self):
+        ffpm = FPPM()
+        root = ffpm.get_root(ffpm.first_version)
+        v0 = root.set_field("val0", 0, ffpm.first_version, "val0")
+
+        for i in range(40):
+            n0 = ffpm.get_root(v0)
+            v1 = n0.set_field("val0", i, v0, "%s" % i)
+
+        version = v0
+        versions = []
+        for i in range(40):
+            n0 = ffpm.get_root(version)
+            version = n0.set_field("val0", i, version, "%s" % i)
+            versions.append((i, version))
+        for i, version in versions:
+            n0 = ffpm.get_root(version)
+            val = n0.get_field("val0", version)
+            self.assertEqual(i, val)
+#            print(i, val)
 
     def test_set_with_root(self):
         ffpm = FPPM()

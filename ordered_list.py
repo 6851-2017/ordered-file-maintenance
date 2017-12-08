@@ -50,7 +50,7 @@ class VersionPtr():
         return "<VersionPtr at index %s--%s>" % (self.bucket.index, self.index)
 
     def __repr__(self):
-        return "<VP %s>" % binary_string(self.get_index())
+        return "<VP %s--%s>" % (self.bucket.index, self.index)
 
 
 
@@ -162,14 +162,17 @@ class BottomBucket():
     def split(self):
         #print("SPLITTING; self.count=%s" % self.count)
         ver_ptr = self.first_ptr
-        last_first_half = None
-        for i in range(self.count//2):
-            #print("First loop {}".format(i))
-            last_first_half = ver_ptr
+        prev_ptr = None
+        count = self.count
+        self.count = 0
+        for i in range(count//2):
+            bucket_count = self.insert_count()
+            ver_ptr.index = (prev_ptr.index if prev_ptr is not None else 0) + (1 << (W - bucket_count))
+            prev_ptr = ver_ptr
             ver_ptr = ver_ptr.next_in_bucket
+        last_first_half = prev_ptr
         last_first_half.next_in_bucket = None
         new_bucket = BottomBucket(self.index+1, self.parent, ver_ptr)
-        prev_ptr = last_first_half
         while ver_ptr:    ##for i in range(self.count//2, self.count):
             ver_ptr.bucket = new_bucket
             bucket_count = new_bucket.insert_count()
