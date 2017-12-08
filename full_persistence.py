@@ -49,7 +49,7 @@ class FPNode():
         for f in self.fields.keys():
             s += "\t" + f + ": " + str(self.fields.get(f, self.earliest_version)) +"\n"
         s += "MODS:\n"
-        for (vers, f, val) in self.mods:
+        for (vers, f, val) in sorted(self.mods, key=lambda x: x[0]):
             if f == "__REVERSE_PTRS__":
                 s += "\tVersion " + str(vers) + ", field " + f + ", value " + str([(str(x[0]), str(x[1])) for x in val]) + "\n"
             else:
@@ -64,6 +64,7 @@ class FPNode():
             raise Exception("Cannot get a field from a node at a version earlier than its earliest version.")
         if (self.child and not version < self.child.earliest_version):
             return self.child.get_field(name, version)
+        self.mods = sorted(self.mods, key=lambda x: x[0])
         for mod in self.mods[::-1]:
             if mod[1] == name and not mod[0] > version:
                 return mod[2]

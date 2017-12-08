@@ -88,7 +88,7 @@ class OrderedListComparison(list):
 
     # add a new bucket to the bucket_list after the specified position
     # adjust indices of all later buckets accordingly
-    def insert_bucket_after(self):
+    def insert_bucket_after(self, bucket_index, new_bucket):
         self.bucket_list.insert(bucket_index+1, new_bucket)
         for i in range(len(self.bucket_list)-1, bucket_index+1, -1):
             self.bucket_list[i].index += 1
