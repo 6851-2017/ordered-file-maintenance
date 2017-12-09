@@ -37,6 +37,14 @@ class VersionPtr():
     def __lt__(self, other):
         return self.get_index() < other.get_index()
 
+    # overload >= operator
+    def __ge__(self, other):
+        return self.get_index() >= other.get_index()
+
+    #overload <= operator
+    def __le__(self, other):
+        return self.get_index() <= other.get_index()
+
     # get concatenated bucket and within-bucket index
     def get_index(self):
         return (self.bucket.index << (W+1)) + self.index
@@ -173,13 +181,12 @@ class BottomBucket():
         last_first_half = prev_ptr
         last_first_half.next_in_bucket = None
         new_bucket = BottomBucket(self.index+1, self.parent, ver_ptr)
-        while ver_ptr:    ##for i in range(self.count//2, self.count):
+        while ver_ptr:
             ver_ptr.bucket = new_bucket
             bucket_count = new_bucket.insert_count()
             ver_ptr.index = (prev_ptr.index if prev_ptr != last_first_half else 0) + (1 << (W - bucket_count))
             prev_ptr = ver_ptr
             ver_ptr = ver_ptr.next_in_bucket
-        self.count = self.count//2
         self.parent.insert_bucket_after(self.index, new_bucket)
 
     def set_index(self, index):
