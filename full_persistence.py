@@ -34,11 +34,15 @@ class Mod():
         self.old_value = old_value
 
     def update_node(self, old_node, new_node, version):
+        ####print("NODE=", self.node)
+        ####print("VALUE, DOVERS, UNDOVERS=", self.value, self.do_version, self.undo_version)
         if self.value == old_node and self.do_version <= version and self.undo_version >= version:
+            ####print("CHANGING")
             mod = Mod(version, self.undo_version, self.node, self.field, new_node, old_node)
             self.node.changes.append(DO(mod))
 
     def copy_with_node(self, node):
+        ####print("CALLED COPY WITH NODE=", node)
         return Mod(self.do_version, self.undo_version, node, self.field, self.value, self.old_value)
 
 
@@ -105,11 +109,11 @@ class FPNode():
             s += "\t" + f + ": " + str(self.fields.get(f, self.earliest_version)) +"\n"
         s += "REVERSE POINTERS:\n"
         for rp in self.reverse_pointers:
-            s += str(rp) + "\n"
+            s += str(rp) + " " + str(rp.mod) + "\n"
         s += "MODS:\n"
         for change in sorted(self.changes, key=lambda x: x.get_version()):
             vers, undovers, f, val, oldval = change.mod.do_version, change.mod.undo_version, change.mod.field, change.mod.value, change.mod.old_value
-            s += "\tVersion " + str(vers) + " until " + str(undovers) + ", field " + f + ", value " + str(val) + ", oldvalue " + str(oldval) + "\n"
+            s += "\t" + str(change.mod) + ": Version " + str(vers) + " until " + str(undovers) + ", field " + f + ", value " + str(val) + ", oldvalue " + str(oldval) + "\n"
         return s
 
     # retrieve the value of the field at the given VersionPtr
@@ -179,6 +183,7 @@ class FPNode():
     # create two new nodes with the first and second half of mods, make them the children
     # then once they're set up, do a bunch of pointer chasing
     def _overflow(self):
+        ####print("\n\n------OVERFLOWING-------\n")
         # amend old node to have children
         self.changes = sorted(self.changes, key=lambda x: x.get_version())
         mid_index = len(self.changes)//2
@@ -205,13 +210,14 @@ class FPNode():
             if rp.mod.undo_version >= mid_version:
                 new_mod = rp.mod.copy_with_node(child)
                 new_revptrs.append(REVPTR(new_mod))  # make a new mod so it has the correct node
-        self.reverse_pointers = old_revptrs
-        child.reverse_pointers = new_revptrs
-
 
         # go through revptrs and change their mods' node to be child and not self
-        for revptr in child.reverse_pointers:
+        for revptr in self.reverse_pointers:
+            ####print("UPDATING NODE: ", revptr.mod, self, child, mid_version)
             revptr.mod.update_node(self, child, mid_version)
+
+        self.reverse_pointers = old_revptrs
+        child.reverse_pointers = new_revptrs
         return
 
 
