@@ -100,7 +100,7 @@ class TestFullPersistence(unittest.TestCase):
                 return None
             else:
                 v = ffpm.first_version
-                left = FPNode("left{}".format(inc), ffpm, v)
+                left = FPNode("left" + str(inc), ffpm, v)
                 v1 = node.set_field("left", left, v)
                 recurse(left, d + 1)
 
