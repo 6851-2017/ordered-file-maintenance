@@ -84,6 +84,7 @@ def random_history_sweep(root, n):
             versions.append(node.set_field("v0", i, version))
         node = node.get_field("p0", version)
 
+LINKED_SIZE = 1024
 def linked_list():
     ns1 = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
 
@@ -93,41 +94,46 @@ def linked_list():
 
     linear_ts = []
     for n in ns2:
-        root, _ = create_linked_list(int(3e3))
+        root, _ = create_linked_list(int(LINKED_SIZE))
         linear_ts.append(linear_value_history_sweep(root, n)[1])
 
     earliest_ts = []
     for n in ns2:
-        root, _ = create_linked_list(int(3e3))
+        root, _ = create_linked_list(int(LINKED_SIZE))
         earliest_ts.append(earliest_history_sweep(root, n)[1])
 
     branching_ts = []
     for n in ns2:
-        root, _ = create_linked_list(int(3e3))
+        root, _ = create_linked_list(int(LINKED_SIZE))
         branching_ts.append(branching_history_sweep(root, n)[1])
 
     random_ts = []
     for n in ns2:
-        root, _ = create_linked_list(int(3e3))
+        root, _ = create_linked_list(int(LINKED_SIZE))
         random_ts.append(random_history_sweep(root, n)[1])
 
     print("========CREATION TIMES================")
+    print("T0 = {}".format(list_creation_ts[0]))
     print(asymptotic(list_creation_ts, ns1))
     print()
     print()
     print("========LINEAR HISTORY CREATION=======")
+    print("T0 = {}".format(linear_ts[0]))
     print(asymptotic(linear_ts, ns2))
     print()
     print()
     print("========EARLIEST HISTORY CREATION========")
+    print("T0 = {}".format(earliest_ts[0]))
     print(asymptotic(earliest_ts, ns2))
     print()
     print()
     print("========BRANCHING HISTORY CREATION========")
+    print("T0 = {}".format(branching_ts[0]))
     print(asymptotic(branching_ts, ns2))
     print()
     print()
     print("========RANDOM HISTORY CREATION========")
+    print("T0 = {}".format(random_ts[0]))
     print(asymptotic(random_ts, ns2))
     print()
     print()
@@ -238,27 +244,28 @@ def tree():
 
     ns2 = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
 
+    TREE_SIZES = 1024
     linear_ts = []
     for n in ns2:
-        root, _ = create_tree(int(2**11))
+        root, _ = create_tree(int(TREE_SIZES))
         root, _ = root
         linear_ts.append(linear_value_history_tree(root, n)[1])
 
     earliest_ts = []
     for n in ns2:
-        root, _ = create_tree(int(2**11))
+        root, _ = create_tree(int(TREE_SIZES))
         root, _ = root
         earliest_ts.append(earliest_history_tree(root, n)[1])
 
     branching_ts = []
     for n in ns2:
-        root, _ = create_tree(int(2**11))
+        root, _ = create_tree(int(TREE_SIZES))
         root, _ = root
         branching_ts.append(branching_history_tree(root, n)[1])
 
     random_ts = []
     for n in ns2:
-        root, _ = create_tree(int(2**11))
+        root, _ = create_tree(int(TREE_SIZES))
         root, _ = root
         random_ts.append(random_history_tree(root, n)[1])
 

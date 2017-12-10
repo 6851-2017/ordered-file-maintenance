@@ -14,7 +14,6 @@ class TestFullPersistence(unittest.TestCase):
         ffpm = FPPM()
         node0 = FPNode("n0", ffpm, 0)
 
-
     def test_single_link(self):
         # Initialize Fully Persitent Pointer Machine
         ffpm = FPPM()
@@ -165,7 +164,6 @@ class TestFullPersistence(unittest.TestCase):
 #            self.assertEqual(i, val)
             print(i, val)
 
-
     def test_set_not_as_many_values(self):
         ffpm = FPPM()
         root = ffpm.get_root(ffpm.first_version)
@@ -189,9 +187,42 @@ class TestFullPersistence(unittest.TestCase):
             n0 = ffpm.get_root(version).get_field("node", version)
             val = n0.get_field("val0", version)
             self.assertEqual(i, val)
-#            print(i, val)
+#            print(i, val, hex(version.get_index()))
 
+    def test_set_mutliple_fields(self):
+        ffpm = FPPM()
+        root = ffpm.get_root(ffpm.first_version)
+        node0 = FPNode("n0", ffpm, ffpm.first_version)
+        v0 = root.set_field("node", node0, ffpm.first_version, "v")
+        #print(root.formatted())
+        #print("v0=",v0)
 
+        n0 = ffpm.get_root(v0).get_field("node", v0)
+        # for i in range(0, 12, 3):
+        #     v1 = n0.set_field("val0", 0, v0, "%s" % i)
+        #    v2 = n0.set_field("val1", 1, v1, "%s" % (i + 1))
+        #    v3 = n0.set_field("val2", 2, v2, "%s" % (i + 2))
+
+        version = v0
+        versions = []
+        for i in range(0, 18, 3):
+            n0 = ffpm.get_root(version).get_field("node", version)
+            version = n0.set_field("val0", i, version, "%s" % i)
+            versions.append((i, version))
+            version = n0.set_field("val1", i+1, version, "%s" % (i+1))
+            versions.append((i+1, version))
+            version = n0.set_field("val2", i+2, version, "%s" % (i+2))
+            versions.append((i+2, version))
+
+        for i, version in versions:
+            n0 = ffpm.get_root(version).get_field("node", version)
+            val0 = n0.get_field("val0", version)
+            val1 = n0.get_field("val1", version)
+            val2 = n0.get_field("val2", version)
+            # self.assertEqual(i, val)
+            print("{} {} {} : at {} ver {}".format(val0, val1,
+                                                   val2, i,
+                                                   hex(version.get_index())))
     def test_above_with_only_root(self):
         ffpm = FPPM()
         root = ffpm.get_root(ffpm.first_version)
@@ -220,7 +251,7 @@ class TestFullPersistence(unittest.TestCase):
         v0 = root.set_field("node", node0, ffpm.first_version, "v")
         v1 = root.set_field("val", 6, v0)
         self.assertEqual(ffpm.get_root(v1).get_field("node", v1), node0)
-        v2 = node0.set_field("val", 7, v0)       
+        v2 = node0.set_field("val", 7, v0)
         self.assertEqual(ffpm.get_root(v2).get_field("node", v2).get_field("val", v2), 7)
         v3 = node0.set_field("val", 8, v0)
         self.assertEqual(ffpm.get_root(v3).get_field("node", v3).get_field("val", v3), 8)

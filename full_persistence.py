@@ -39,7 +39,7 @@ class Mod():
             self.node.changes.append(DO(mod))
 
     def copy_with_node(self, node):
-        return Mod(self.do_version, self.undo_version, node, self.field, self.value, self.old_value) 
+        return Mod(self.do_version, self.undo_version, node, self.field, self.value, self.old_value)
 
 
 class REVPTR():
@@ -79,7 +79,7 @@ class UNDO():
 
     def change_node(self, node):
         self.mod.node = node
-        
+
 
 class FPNode():
     '''A fully persistent DS node: stores fields, reverse pointers, mods.'''
@@ -99,7 +99,7 @@ class FPNode():
         s = "\n" + str(self) + "\n"
         s += "PARENT: " + str(self.parent) + "\n"
         s += "CHILD: " + str(self.child) + "\n"
-        s += "EARLIEST VERSION: " + str(self.earliest_version) + "\n"
+        s += "EARLIEST VERSION: " + hex(self.earliest_version.get_index()) + "\n"
         s += "FIELDS:\n"
         for f in self.fields.keys():
             s += "\t" + f + ": " + str(self.fields.get(f, self.earliest_version)) +"\n"
@@ -115,11 +115,15 @@ class FPNode():
     # retrieve the value of the field at the given VersionPtr
     # returns None if it's not in the fields or mods
     # if version is older than anything in this node, throws an error
-    def get_field(self, field, version):
+    def get_field(self, field, version, is_child=False):
         if (version < self.earliest_version):
             raise Exception("Cannot get a field from a node at a version earlier than its earliest version.")
-        if (self.child and not version < self.child.earliest_version):
-            return self.child.get_field(field, version)
+
+        child = self.child
+        while (not is_child and child):
+            if (version >= child.earliest_version):
+                return child.get_field(field, version, is_child=True)
+            child = child.child
 #            raise Exception("Should have called get_field on child instead.")
         self.changes = sorted(self.changes, key=lambda x: x.get_version())
         for change in self.changes[::-1]:
@@ -145,7 +149,7 @@ class FPNode():
         do_version.version_name = "(" + version_name
         undo_version = self.parent.versioner.insert_after(do_version)
         undo_version.version_name = version_name + ")"
-        
+
         old_value = self.get_field(field, version)
         mod = Mod(do_version, undo_version, self, field, value, old_value)
         self.changes.append(DO(mod))
@@ -164,7 +168,7 @@ class FPNode():
             value.reverse_pointers.append(REVPTR(mod))
 
         return do_version
-    
+
 
     # PRIVATE METHODS
 
@@ -203,7 +207,7 @@ class FPNode():
                 new_revptrs.append(REVPTR(new_mod))  # make a new mod so it has the correct node
         self.reverse_pointers = old_revptrs
         child.reverse_pointers = new_revptrs
-        
+
 
         # go through revptrs and change their mods' node to be child and not self
         for revptr in child.reverse_pointers:
@@ -237,9 +241,8 @@ class FPRoot(FPNode):
         self.version_ptrs = old_ptrs
         self.child.version_ptrs = new_ptrs
         return
-            
-        
 
-    
+
+
 
 
