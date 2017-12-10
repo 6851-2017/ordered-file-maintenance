@@ -24,7 +24,6 @@ class VersionPtr():
     def __init__(self, index, root, bucket):
         self.index = index
         self.root = root
-        root.add_version_pointer(self)
         self.bucket = bucket
         self.next_in_bucket = None
         self.version_name = "_"
@@ -122,6 +121,7 @@ class OrderedList():
             bucket_count = version.bucket.insert_count()
         index = version.index + (1 << (W - bucket_count))
         new_ptr = VersionPtr(index, version.get_root(), version.bucket)
+        new_ptr.root.add_version_pointer(new_ptr)
         new_ptr.next_in_bucket = version.next_in_bucket
         version.next_in_bucket = new_ptr
         return new_ptr

@@ -232,8 +232,8 @@ class FPRoot(FPNode):
             if version < self.child.earliest_version:
                 old_ptrs.append(version)
             else:
-                new_ptrs.append(version)
                 version.root = self.child
+                new_ptrs.append(version)
         self.version_ptrs = old_ptrs
         self.child.version_ptrs = new_ptrs
         return
