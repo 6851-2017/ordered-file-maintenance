@@ -33,11 +33,13 @@ class Mod():
         self.value = value
         self.old_value = old_value
 
-    def set_value(self, value):
-        self.value = value
-
     def update_node(self, old_node, new_node, version):
-        pass  # TODO implement, crap how???
+        if self.value == old_node and self.do_version <= version and self.undo_version >= version:
+            mod = Mod(version, self.undo_version, self.node, self.field, new_node, old_node)
+            self.node.changes.append(DO(mod))
+
+    def copy_with_node(self, node):
+        return Mod(self.do_version, self.undo_version, node, self.field, self.value, self.old_value) 
 
 
 class REVPTR():
@@ -58,6 +60,9 @@ class DO():
     def get_field(self):
         return self.mod.field
 
+    def change_node(self, node):
+        self.mod.node = node
+
 
 class UNDO():
     def __init__(self, mod):
@@ -71,6 +76,9 @@ class UNDO():
 
     def get_field(self):
         return self.mod.field
+
+    def change_node(self, node):
+        self.mod.node = node
         
 
 class FPNode():
@@ -111,7 +119,8 @@ class FPNode():
         if (version < self.earliest_version):
             raise Exception("Cannot get a field from a node at a version earlier than its earliest version.")
         if (self.child and not version < self.child.earliest_version):
-            raise Exception("Should have called get_field on child instead.")
+            return self.child.get_field(field, version)
+#            raise Exception("Should have called get_field on child instead.")
         self.changes = sorted(self.changes, key=lambda x: x.get_version())
         for change in self.changes[::-1]:
             if change.get_field() == field and change.get_version() <= version:
@@ -180,6 +189,8 @@ class FPNode():
         self.changes = self.changes[:mid_index]
         for change in self.changes:  # mods in the older half applied to newer half
             child.fields[change.get_field()] = change.get_value()
+        for change in child.changes:
+            change.change_node(child)
 
         # update reverse pointers of self and child
         old_revptrs = []
@@ -188,9 +199,11 @@ class FPNode():
             if rp.mod.do_version < mid_version:
                 old_revptrs.append(rp)
             if rp.mod.undo_version >= mid_version:
-                new_revptrs.append(rp)
+                new_mod = rp.mod.copy_with_node(child)
+                new_revptrs.append(REVPTR(new_mod))  # make a new mod so it has the correct node
         self.reverse_pointers = old_revptrs
         child.reverse_pointers = new_revptrs
+        
 
         # go through revptrs and change their mods' node to be child and not self
         for revptr in child.reverse_pointers:
