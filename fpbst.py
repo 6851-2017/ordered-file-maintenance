@@ -94,7 +94,7 @@ class FPBST():
     def find(self, val, version):
         node = self.root.get_right(version)
         while (node is not None):
-            if node.get_value == val:
+            if node.get_value(version) == val:
                 return node
             if self.comparator(val, node.get_value(version)):
                 node = node.get_right(version)
@@ -120,6 +120,8 @@ tree = FPBST()
 v = tree.earliest_version
 v = tree.insert(3, v)
 v = tree.insert(5, v)
-v = tree.insert(6, v)
-v = tree.insert(2, v)
-print(tree.format(v))
+v2 = tree.insert(6, v)
+v2 = tree.insert(2, v2)
+##print(tree.format(v))
+##print(tree.format(v2))
+##print(tree.find(3, v2))

@@ -1,7 +1,7 @@
 import unittest
 from full_persistence import FPPM
 from full_persistence import FPNode
-
+from fpbst import FPBST
 
 
 
@@ -138,45 +138,36 @@ class TestFullPersistence(unittest.TestCase):
         root = ffpm.get_root(ffpm.first_version)
         node0 = FPNode("n0", ffpm, ffpm.first_version)
         v0 = root.set_field("node", node0, ffpm.first_version, "v")
-        #print(root.formatted())
-        #print("v0=",v0)
 
-        for i in range(36):
+        for i in range(119):
             n0 = ffpm.get_root(v0).get_field("node", v0)
             v1 = n0.set_field("val0", i, v0, "%s" % i)
-            #print(n0.formatted())
 
         version = v0
         versions = []
-        for i in range(36):
+        for i in range(119):
             n0 = ffpm.get_root(version).get_field("node", version)
             version = n0.set_field("val0", i, version, "%s" % i)
-            #print(n0.formatted())
             versions.append((i, version))
-#        print(ffpm.all_version_ptrs_ever)
 
         for i, version in versions:
-            print(ffpm.get_root(version).formatted())
             n0 = ffpm.get_root(version).get_field("node", version)
             val = n0.get_field("val0", version)
             self.assertEqual(i, val)
-#           print(i, val)
 
     def test_set_not_as_many_values(self):
         ffpm = FPPM()
         root = ffpm.get_root(ffpm.first_version)
         node0 = FPNode("n0", ffpm, ffpm.first_version)
         v0 = root.set_field("node", node0, ffpm.first_version, "v")
-        #print(root.formatted())
-        #print("v0=",v0)
 
-        for i in range(5):
+        for i in range(36):
             n0 = ffpm.get_root(v0).get_field("node", v0)
             v1 = n0.set_field("val0", 0, v0, "%s" % i)
 
         version = v0
         versions = []
-        for i in range(5):
+        for i in range(36):
             n0 = ffpm.get_root(version).get_field("node", version)
             version = n0.set_field("val0", i, version, "%s" % i)
             versions.append((i, version))
@@ -185,15 +176,12 @@ class TestFullPersistence(unittest.TestCase):
             n0 = ffpm.get_root(version).get_field("node", version)
             val = n0.get_field("val0", version)
             self.assertEqual(i, val)
-#            print(i, val, hex(version.get_index()))
 
     def test_set_mutliple_fields(self):
         ffpm = FPPM()
         root = ffpm.get_root(ffpm.first_version)
         node0 = FPNode("n0", ffpm, ffpm.first_version)
         v0 = root.set_field("node", node0, ffpm.first_version, "v")
-        #print(root.formatted())
-        #print("v0=",v0)
 
         n0 = ffpm.get_root(v0).get_field("node", v0)
         # for i in range(0, 12, 3):
@@ -227,7 +215,6 @@ class TestFullPersistence(unittest.TestCase):
                 self.assertEqual(i, val1)
             elif i % 3 == 2:
                 self.assertEqual(i, val2)
- #          self.assertEqual(i, val)
  #           print("{} {} {} : at {} ver {}".format(val0, val1, val2, i, hex(version.get_index())))
 
     def test_above_with_only_root(self):
@@ -249,7 +236,6 @@ class TestFullPersistence(unittest.TestCase):
             n0 = ffpm.get_root(version)
             val = n0.get_field("val0", version)
             self.assertEqual(i, val)
-            #print(i, val)
 
     def test_set_with_root(self):
         ffpm = FPPM()
@@ -263,6 +249,18 @@ class TestFullPersistence(unittest.TestCase):
         v3 = node0.set_field("val", 8, v0)
         self.assertEqual(ffpm.get_root(v3).get_field("node", v3).get_field("val", v3), 8)
         self.assertEqual(ffpm.get_root(v2).get_field("node", v2).get_field("val", v2), 7)
+
+
+    def test_bst(self):
+        tree = FPBST()
+        v0 = tree.earliest_version
+        v1 = tree.insert(3, v0)
+        v2 = tree.insert(5, v1)
+        v3 = tree.insert(6, v2)
+        v4 = tree.insert(2, v3)
+        v5 = tree.insert(1, v3)
+        self.assertTrue(tree.find(1, v4) is None)
+        self.assertFalse(tree.find(1, v5) is None)
 
 
 
