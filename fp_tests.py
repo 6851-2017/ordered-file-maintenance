@@ -2,9 +2,8 @@ import unittest
 from full_persistence import FPPM
 from full_persistence import FPNode
 
-# TODO
-# test roots overflowing
-# test multiple fields
+
+
 
 # Hack to give each thing unique name
 inc = 0
@@ -217,6 +216,12 @@ class TestFullPersistence(unittest.TestCase):
             val0 = n0.get_field("val0", version)
             val1 = n0.get_field("val1", version)
             val2 = n0.get_field("val2", version)
+            if i % 3 == 0:
+                self.assertEqual(i, val0)
+            elif i % 3 == 1:
+                self.assertEqual(i, val1)
+            elif i % 3 == 2:
+                self.assertEqual(i, val2)
  #          self.assertEqual(i, val)
  #           print("{} {} {} : at {} ver {}".format(val0, val1, val2, i, hex(version.get_index())))
 

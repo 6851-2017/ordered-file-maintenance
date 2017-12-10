@@ -39,7 +39,6 @@ class Mod():
             self.node.changes.append(DO(mod))
 
     def copy_with_value(self, value):
-        # TODO: we probably also need to be able to copy_with_node if a node overflows that has revptrs pointing to it
         return Mod(self.do_version, self.undo_version, self.node, self.field, value, self.old_value)
 
 
