@@ -34,16 +34,13 @@ class Mod():
         self.old_value = old_value
 
     def update_node(self, old_node, new_node, version):
-        ####print("NODE=", self.node)
-        ####print("VALUE, DOVERS, UNDOVERS=", self.value, self.do_version, self.undo_version)
         if self.value == old_node and self.do_version <= version and self.undo_version >= version:
-            ####print("CHANGING")
             mod = Mod(version, self.undo_version, self.node, self.field, new_node, old_node)
             self.node.changes.append(DO(mod))
 
-    def copy_with_node(self, node):
-        ####print("CALLED COPY WITH NODE=", node)
-        return Mod(self.do_version, self.undo_version, node, self.field, self.value, self.old_value)
+    def copy_with_value(self, value):
+        # TODO: we probably also need to be able to copy_with_node if a node overflows that has revptrs pointing to it
+        return Mod(self.do_version, self.undo_version, self.node, self.field, value, self.old_value)
 
 
 class REVPTR():
@@ -183,7 +180,6 @@ class FPNode():
     # create two new nodes with the first and second half of mods, make them the children
     # then once they're set up, do a bunch of pointer chasing
     def _overflow(self):
-        ####print("\n\n------OVERFLOWING-------\n")
         # amend old node to have children
         self.changes = sorted(self.changes, key=lambda x: x.get_version())
         mid_index = len(self.changes)//2
@@ -208,12 +204,11 @@ class FPNode():
             if rp.mod.do_version < mid_version:
                 old_revptrs.append(rp)
             if rp.mod.undo_version >= mid_version:
-                new_mod = rp.mod.copy_with_node(child)
+                new_mod = rp.mod.copy_with_value(child)
                 new_revptrs.append(REVPTR(new_mod))  # make a new mod so it has the correct node
 
         # go through revptrs and change their mods' node to be child and not self
         for revptr in self.reverse_pointers:
-            ####print("UPDATING NODE: ", revptr.mod, self, child, mid_version)
             revptr.mod.update_node(self, child, mid_version)
 
         self.reverse_pointers = old_revptrs
