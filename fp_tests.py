@@ -141,14 +141,14 @@ class TestFullPersistence(unittest.TestCase):
         #print(root.formatted())
         #print("v0=",v0)
 
-        for i in range(119):
+        for i in range(36):
             n0 = ffpm.get_root(v0).get_field("node", v0)
             v1 = n0.set_field("val0", i, v0, "%s" % i)
             #print(n0.formatted())
 
         version = v0
         versions = []
-        for i in range(119):
+        for i in range(36):
             n0 = ffpm.get_root(version).get_field("node", version)
             version = n0.set_field("val0", i, version, "%s" % i)
             #print(n0.formatted())
@@ -156,6 +156,7 @@ class TestFullPersistence(unittest.TestCase):
 #        print(ffpm.all_version_ptrs_ever)
 
         for i, version in versions:
+            print(ffpm.get_root(version).formatted())
             n0 = ffpm.get_root(version).get_field("node", version)
             val = n0.get_field("val0", version)
             self.assertEqual(i, val)
@@ -206,8 +207,12 @@ class TestFullPersistence(unittest.TestCase):
             n0 = ffpm.get_root(version).get_field("node", version)
             version = n0.set_field("val0", i, version, "%s" % i)
             versions.append((i, version))
+
+            n0 = ffpm.get_root(version).get_field("node", version)
             version = n0.set_field("val1", i+1, version, "%s" % (i+1))
             versions.append((i+1, version))
+
+            n0 = ffpm.get_root(version).get_field("node", version)
             version = n0.set_field("val2", i+2, version, "%s" % (i+2))
             versions.append((i+2, version))
 
