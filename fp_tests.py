@@ -146,7 +146,7 @@ class TestFullPersistence(unittest.TestCase):
         for i in range(30):
             n0 = ffpm.get_root(v0).get_field("node", v0)
             v1 = n0.set_field("val0", i, v0, "%s" % i)
-            print(n0.formatted())
+            #print(n0.formatted())
 
         version = v0
         versions = []
