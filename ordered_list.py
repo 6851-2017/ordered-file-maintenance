@@ -1,13 +1,11 @@
 # jamb, rusch 6.851 Fall 2017
 
-# TODOs:
-# stuff below
-# change bucket_list to OFM not list
+
 
 import math
 from ordered_file_maintenance import OrderedFile
 
-W = 16  # machine word size, TODO swap to 64
+W = 64  # machine word size
 B = 4 # for printing only
 
 def binary_string(index):
@@ -29,6 +27,7 @@ class VersionPtr():
         root.add_version_pointer(self)
         self.bucket = bucket
         self.next_in_bucket = None
+        self.version_name = "_"
 
     # overload > operator
     def __gt__(self, other):
@@ -37,6 +36,14 @@ class VersionPtr():
     #overload < operator
     def __lt__(self, other):
         return self.get_index() < other.get_index()
+
+    # overload >= operator
+    def __ge__(self, other):
+        return self.get_index() >= other.get_index()
+
+    #overload <= operator
+    def __le__(self, other):
+        return self.get_index() <= other.get_index()
 
     # get concatenated bucket and within-bucket index
     def get_index(self):
@@ -51,75 +58,26 @@ class VersionPtr():
         return "<VersionPtr at index %s--%s>" % (self.bucket.index, self.index)
 
     def __repr__(self):
-        return "<VP %s>" % binary_string(self.get_index())
+        return "<VP %s--%s>" % (self.bucket.index, self.index)
 
-
-class Versioner():
-    '''Versioning object that stores an OrderedList and a list of VersionPtrs into it
-        to maintain via a callback function.'''
-
-    # constructor
-    def __init__(self, mock=False):
-        self.list = None
-        if mock:
-            self.list = OrderedListComparison(self.callback, self)
-        else:
-            self.list = OrderedList(self.callback, self)
-        self.ptrs_to_update = {}  # map from index to Bucket; note only one Bucket should ever be created to that index
-
-    # OrderedList should call this whenever it moves the bucket at position index to new_index
-    # returns nothing
-    def callback(self, index, new_index):
-        if index == new_index:
-            # don't need to do anything
-            return
-        bucket = self.ptrs_to_update.get(index)
-        if bucket:
-            assert bucket.index == index
-            bucket.set_index(new_index)
-            assert self.ptrs_to_update.get(new_index) is None
-            self.ptrs_to_update[new_index] = self.ptrs_to_update.pop(index)
-        return
-
-    # add a bucket to keep track of in callbacks
-    def track_bucket(self, bucket):
-        index = bucket.index
-        assert self.ptrs_to_update.get(index) is None, "index=%s, ptr=%s, bucket_list=%s" % (index, str(self.ptrs_to_update.get(index)), self.list.bucket_list)
-        self.ptrs_to_update[index] = bucket
-        #print("Tracking bucket: %s=%s" % (index, bucket))
-        #print(self.ptrs_to_update)
-
-    # insert a new VersionPtr into the OrderedList after the given VersionPtr and return it
-    def insert_after(self, version):
-        return self.list.insert_after(version)
-
-    # insert something when currently empty
-    def insert_first(self, root):
-        ver_ptr = self.list.insert_first(root)
-        self.track_bucket(ver_ptr.bucket)
-        return ver_ptr
 
 
 class OrderedListComparison(list):
     '''MOCK EXAMPLE of ordered-file-maintenance-based data structure, not O(1)'''
 
     # constructor
-    def __init__(self, callback, versioner):
+    def __init__(self):
         super(OrderedListComparison, self).__init__([None, None])
-        self.callback = callback  # call on (index, new_index) any time we move a BottomBucket from index to new_index
         self.bucket_list = []
         self.count = 0
-        self.versioner = versioner
 
     # insert a new VersionPtr into the list after the given VersionPtr and return it
-    # TODO how do we know what root to insert? should probably change at some point
     def insert_after(self, version):
         self.count += 1
         bucket_count = None
         while (bucket_count is None):
             bucket_count = version.bucket.insert_count()
         index = version.index + (1 << (W - bucket_count))
-        #print("INSERT after version %s: new version %s" % (version.index, index))
         new_ptr = VersionPtr(index, version.get_root(), version.bucket)
         new_ptr.next_in_bucket = version.next_in_bucket
         version.next_in_bucket = new_ptr
@@ -141,7 +99,7 @@ class OrderedListComparison(list):
     def insert_bucket_after(self, bucket_index, new_bucket):
         self.bucket_list.insert(bucket_index+1, new_bucket)
         for i in range(len(self.bucket_list)-1, bucket_index+1, -1):
-            self.callback(self.bucket_list[i].index, self.bucket_list[i].index+1)
+            self.bucket_list[i].index += 1
 
     # return the total number of version pointers in self
     def get_count(self):
@@ -151,21 +109,18 @@ class OrderedListComparison(list):
 class OrderedList():
     '''The real one, with OFM.'''
         # constructor
-    def __init__(self, callback, versioner):
+    def __init__(self):
         # should call callback on (index, new_index) any time we move a BottomBucket from index to new_index
-        self.bucket_list = OrderedFile(callback)
+        self.bucket_list = OrderedFile()
         self.count = 0
-        self.versioner = versioner
 
     # insert a new VersionPtr into the list after the given VersionPtr and return it
-    # TODO how do we know what root to insert? should probably change at some point
     def insert_after(self, version):
         self.count += 1
         bucket_count = None
         while (bucket_count is None):
             bucket_count = version.bucket.insert_count()
         index = version.index + (1 << (W - bucket_count))
-        #print("INSERT after version %s: new version %s" % (version.index, index))
         new_ptr = VersionPtr(index, version.get_root(), version.bucket)
         new_ptr.next_in_bucket = version.next_in_bucket
         version.next_in_bucket = new_ptr
@@ -215,23 +170,24 @@ class BottomBucket():
     def split(self):
         #print("SPLITTING; self.count=%s" % self.count)
         ver_ptr = self.first_ptr
-        last_first_half = None
-        for i in range(self.count//2):
-            #print("First loop {}".format(i))
-            last_first_half = ver_ptr
+        prev_ptr = None
+        count = self.count
+        self.count = 0
+        for i in range(count//2):
+            bucket_count = self.insert_count()
+            ver_ptr.index = (prev_ptr.index if prev_ptr is not None else 0) + (1 << (W - bucket_count))
+            prev_ptr = ver_ptr
             ver_ptr = ver_ptr.next_in_bucket
+        last_first_half = prev_ptr
         last_first_half.next_in_bucket = None
         new_bucket = BottomBucket(self.index+1, self.parent, ver_ptr)
-        prev_ptr = last_first_half
-        while ver_ptr:    ##for i in range(self.count//2, self.count):
+        while ver_ptr:
             ver_ptr.bucket = new_bucket
             bucket_count = new_bucket.insert_count()
             ver_ptr.index = (prev_ptr.index if prev_ptr != last_first_half else 0) + (1 << (W - bucket_count))
             prev_ptr = ver_ptr
             ver_ptr = ver_ptr.next_in_bucket
-        self.count = self.count//2
         self.parent.insert_bucket_after(self.index, new_bucket)
-        ##self.parent.versioner.track_bucket(new_bucket)
 
     def set_index(self, index):
         self.index = index
@@ -241,6 +197,15 @@ class BottomBucket():
 
     def __repr__(self):
         return "BUCKET %s: %s elements" % (self.index, self.count)
+
+    # format: (1  (2  )2  (3  )3  )1
+    def parenth_format(self):
+        ver_ptr = self.first_ptr
+        ret = ""
+        while ver_ptr:
+            ret += ver_ptr.version_name + " "
+            ver_ptr = ver_ptr.next_in_bucket
+        return ret
 
 
 
