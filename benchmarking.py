@@ -238,44 +238,43 @@ def create_tree(n):
 
     # Setup node0 and node1
     root = FPNode("root", fppm, fppm.first_version)
-    def recurse(node, name, n):
-        if n <= 1:
-            return None
+    def recurse(node, name, v, n):
+        if n <= 1 or node is None:
+            return v
 
-        left_n = FPNode(name + "L", fppm, node.earliest_version)
-        right_n = FPNode(name + "R", fppm, node.earliest_version)
-        v = node.set_field("left", left_n, node.earliest_version)
+        left_n = FPNode(name + "L", fppm, v)
+        right_n = FPNode(name + "R", fppm, v)
+        v = node.set_field("left", left_n, v)
         v = node.set_field("right", right_n, v)
-        recurse(node, name + "L", n-1)
-        recurse(node, name + "R", n-1)
+        v = recurse(node, name + "L", v, n-1)
+        v = recurse(node, name + "R", v, n-1)
         return v
 
-    v = recurse(root, "node", int(log(n, 2)))
-    root.good_version = v
+    v = fppm.first_version
+    v = recurse(root, "node", v, int(log(n, 2)))
     return root, v
 
 @timeit
-def linear_value_history_tree_write(root, n):
+def linear_value_history_tree_write(root, v, n):
 
     def edit_recurse(node, versions):
         if not node:
             return
 
-        version = node.good_version
+        version = v
         for i in range(n):
             version = node.set_field("v0", i, version)
             versions[node.name].append(version)
 
-        version = node.earliest_version
-        edit_recurse(node.get_field("left", version), versions)
-        edit_recurse(node.get_field("right", version), versions)
+        edit_recurse(node.get_field("left", v), versions)
+        edit_recurse(node.get_field("right", v), versions)
 
     versions = defaultdict(list)
     edit_recurse(root, versions)
     return versions
 
 @timeit
-def linear_value_history_tree_read(root, versions):
+def linear_value_history_tree_read(root, v, versions):
 
     def read_recurse(node, versions):
         if not node:
@@ -284,34 +283,33 @@ def linear_value_history_tree_read(root, versions):
         for i, version in enumerate(versions[node.name]):
             val = node.get_field("v0", version)
 
-        version = node.earliest_version
-        read_recurse(node.get_field("left", version), versions)
-        read_recurse(node.get_field("right", version), versions)
+        print(node.get_field("left", v).formatted())
+        read_recurse(node.get_field("left", v), versions)
+        read_recurse(node.get_field("right", v), versions)
 
     read_recurse(root, versions)
 
 @timeit
-def earliest_history_tree_write(root, n):
+def earliest_history_tree_write(root, v, n):
 
     def edit_recurse(node, versions):
         if not node:
             return
 
-        version = node.earliest_version
+        version = v
         for i in range(n):
-            version = node.set_field("v0", i, version)
-            versions[node.name].append(version)
+            new_version = node.set_field("v0", i, version)
+            versions[node.name].append(new_version)
 
-        edit_recurse(node.get_field("left", version), versions)
-        edit_recurse(node.get_field("right", version), versions)
+        edit_recurse(node.get_field("left", v), versions)
+        edit_recurse(node.get_field("right", v), versions)
 
-        version = node.earliest_version
     versions = defaultdict(list)
     edit_recurse(root, versions)
     return versions
 
 @timeit
-def earliest_history_tree_read(root, versions):
+def earliest_history_tree_read(root, v, versions):
 
     def read_recurse(node, versions):
         if not node:
@@ -320,29 +318,29 @@ def earliest_history_tree_read(root, versions):
         for i, version in enumerate(versions[node.name]):
             val = node.get_field("v0", version)
 
-        read_recurse(node.get_field("left", version), versions)
-        read_recurse(node.get_field("right", version), versions)
+        read_recurse(node.get_field("left", v), versions)
+        read_recurse(node.get_field("right", v), versions)
 
     read_recurse(root, versions)
 
 @timeit
-def branching_history_tree_write(root, nt):
+def branching_history_tree_write(root, v, nt):
     def edit_recurse(node, versions):
         if not node:
             return
 
-        edit_recurse_ver(node, node.earliest_version, int(log(nt, 2)), versions)
+        edit_recurse_ver(node, v, int(log(nt, 2)), versions)
 
-        version = node.earliest_version
+        version = v
         edit_recurse(node.get_field("left", version), versions)
         edit_recurse(node.get_field("right", version), versions)
 
-    def edit_recurse_ver(node, v, n, versions):
+    def edit_recurse_ver(node, v2, n, versions):
         if n <= 1:
             return None
 
-        left_v = node.set_field("v0", n, v)
-        right_v = node.set_field("v0", n, v)
+        left_v = node.set_field("v0", n, v2)
+        right_v = node.set_field("v0", n, v2)
         versions[node.name].append(left_v)
         versions[node.name].append(right_v)
         edit_recurse_ver(node, left_v, n-1, versions)
@@ -353,7 +351,7 @@ def branching_history_tree_write(root, nt):
     return versions
 
 @timeit
-def branching_history_tree_read(root, versions):
+def branching_history_tree_read(root, v, versions):
 
     def read_recurse(node, versions):
         if not node:
@@ -362,25 +360,24 @@ def branching_history_tree_read(root, versions):
         for i, version in enumerate(versions[node.name]):
             val = node.get_field("v0", version)
 
-        version = node.earliest_version
-        read_recurse(node.get_field("left", version), versions)
-        read_recurse(node.get_field("right", version), versions)
+        read_recurse(node.get_field("left", v), versions)
+        read_recurse(node.get_field("right", v), versions)
 
     read_recurse(root, versions)
 
 @timeit
-def random_history_tree_write(root, n):
+def random_history_tree_write(root, v, n):
     def edit_recurse(node, all_versions):
         if not node:
             return
 
-        versions = [node.earliest_version]
+        versions = [v]
         for i in range(n):
             version = random.choice(versions)
             versions.append(node.set_field("v0", i, version))
         all_versions[node.name] = versions
 
-        version = node.earliest_version
+        version = v
         edit_recurse(node.get_field("left", version), all_versions)
         edit_recurse(node.get_field("right", version), all_versions)
 
@@ -389,7 +386,7 @@ def random_history_tree_write(root, n):
     return versions
 
 @timeit
-def random_history_tree_read(root, versions):
+def random_history_tree_read(root, v, versions):
     def read_recurse(node, versions):
         if not node:
             return
@@ -397,9 +394,8 @@ def random_history_tree_read(root, versions):
         for i, version in enumerate(versions[node.name]):
             val = node.get_field("v0", version)
 
-        version = node.earliest_version
-        read_recurse(node.get_field("left", version), versions)
-        read_recurse(node.get_field("right", version), versions)
+        read_recurse(node.get_field("left", v), versions)
+        read_recurse(node.get_field("right", v), versions)
 
     read_recurse(root, versions)
 
@@ -410,44 +406,39 @@ def tree():
 
     ns2 = [2**n for n in range(8)]
 
-    TREE_SIZES = 1024
+    TREE_SIZES = 32
     linear_ts_write = []
     linear_ts_read = []
     for n in ns2:
-        root, _ = create_tree(int(TREE_SIZES))
-        root, _ = root
-        versions, t = linear_value_history_tree_write(root, n)
+        (root, v), _ = create_tree(int(TREE_SIZES))
+        versions, t = linear_value_history_tree_write(root, v, n)
         linear_ts_write.append(t)
-        linear_ts_read.append(linear_value_history_tree_read(root, versions)[1])
+        linear_ts_read.append(linear_value_history_tree_read(root, v, versions)[1])
 
     earliest_ts_write = []
     earliest_ts_read = []
     for n in ns2:
-        root, _ = create_tree(int(TREE_SIZES))
-        root, _ = root
-        versions, t = earliest_history_tree_write(root, n)
+        (root, v), _ = create_tree(int(TREE_SIZES))
+        versions, t = earliest_history_tree_write(root, v, n)
         earliest_ts_write.append(t)
-        earliest_ts_read.append(earliest_history_tree_read(root, versions)[1])
+        earliest_ts_read.append(earliest_history_tree_read(root, v, versions)[1])
 
     branching_ts_write = []
     branching_ts_read = []
     for n in ns2:
-        root, _ = create_tree(int(TREE_SIZES))
-        root, _ = root
-        versions, t = branching_history_tree_write(root, n)
-        print(len(versions), n)
+        (root, v), _ = create_tree(int(TREE_SIZES))
+        versions, t = branching_history_tree_write(root, v, n)
         branching_ts_write.append(t)
-        branching_ts_read.append(branching_history_tree_read(root, versions)[1])
+        branching_ts_read.append(branching_history_tree_read(root, v, versions)[1])
 
     random_ts_write = []
     random_ts_read = []
     for n in ns2:
-        root, _ = create_tree(int(TREE_SIZES))
-        root, _ = root
-        versions, t = random_history_tree_write(root, n)
-        print(len(versions), n)
+        (root, v), _ = create_tree(int(TREE_SIZES))
+        versions, t = random_history_tree_write(root, v, n)
+        print(len(versions))
         random_ts_write.append(t)
-        random_ts_read.append(random_history_tree_read(root, versions)[1])
+        random_ts_read.append(random_history_tree_read(root, v, versions)[1])
 
 
     print("========CREATION TIMES================")
