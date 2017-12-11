@@ -31,11 +31,22 @@ def create_linked_list(n):
     # Initialize Fully Persitent Pointer Machine
     fppm = FPPM()
     root = fppm.get_root(fppm.first_version)
+
+    node = root
+    next_node = FPNode("n{}".format(0), fppm, fppm.first_version)
+    v = root.set_field("p0", next_node, fppm.first_version)
+    root = fppm.get_root(fppm.first_version)
+    root.good_v = v
+    node = root.get_field("p0", v)
     prev_node = root
+
     for i in range(1, n):
-        cur_node = FPNode("n{}".format(i), fppm, fppm.first_version)
-        prev_node.set_field("p0", cur_node, fppm.first_version)
-        prev_node = cur_node
+        next_node = FPNode("n{}".format(i), fppm, fppm.first_version)
+        v = node.set_field("p0", next_node, fppm.first_version)
+        node.good_v = v
+        node = prev_node.get_field("p0", prev_node.good_v)
+        prev_node = node
+        node = node.get_field("p0", v)
 
     return root
 
@@ -46,7 +57,7 @@ def linear_value_history_sweep_write(root, n):
     node = root
     n_i = 0
     while node:
-        version = node.earliest_version
+        version = node.good_v
         for i in range(n):
             version = node.set_field("v0", i, version)
             versions[n_i].append(version)
@@ -251,6 +262,7 @@ def create_tree(n):
         return v
 
     v = recurse(root, "node", int(log(n, 2)))
+    root.good_version = v
     return root, v
 
 @timeit
@@ -260,7 +272,7 @@ def linear_value_history_tree_write(root, n):
         if not node:
             return
 
-        version = node.earliest_version
+        version = node.good_version
         for i in range(n):
             version = node.set_field("v0", i, version)
             versions[node.name].append(version)
