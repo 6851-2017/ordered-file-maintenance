@@ -30,34 +30,23 @@ def asymptotic(xs, ns):
 def create_linked_list(n):
     # Initialize Fully Persitent Pointer Machine
     fppm = FPPM()
-    root = fppm.get_root(fppm.first_version)
-
-    node = root
-    next_node = FPNode("n{}".format(0), fppm, fppm.first_version)
-    v = root.set_field("p0", next_node, fppm.first_version)
-    root = fppm.get_root(fppm.first_version)
-    root.good_v = v
-    node = root.get_field("p0", v)
-    prev_node = root
-
+    node = fppm.get_root(fppm.first_version)
+    v = fppm.first_version
     for i in range(1, n):
-        next_node = FPNode("n{}".format(i), fppm, fppm.first_version)
-        v = node.set_field("p0", next_node, fppm.first_version)
-        node.good_v = v
-        node = prev_node.get_field("p0", prev_node.good_v)
-        prev_node = node
+        next_node = FPNode("n{}".format(i), fppm, v)
+        v = node.set_field("p0", next_node, v)
         node = node.get_field("p0", v)
 
-    return root
+    return fppm.get_root(v), v
 
 @timeit
-def linear_value_history_sweep_write(root, n):
+def linear_value_history_sweep_write(root, v, n):
     versions = defaultdict(list)
 
     node = root
     n_i = 0
     while node:
-        version = node.good_v
+        version = v
         for i in range(n):
             version = node.set_field("v0", i, version)
             versions[n_i].append(version)
@@ -76,7 +65,7 @@ def linear_value_history_sweep_read(root, versions):
             #assert(val == i)
 
 @timeit
-def earliest_history_sweep_write(root, n):
+def earliest_history_sweep_write(root, v, n):
     versions = defaultdict(list)
 
     node = root
@@ -100,7 +89,7 @@ def earliest_history_sweep_read(root, versions):
             #assert(val == i)
 
 @timeit
-def branching_history_sweep_write(root, n):
+def branching_history_sweep_write(root, v, n):
     versions = defaultdict(list)
 
     def recurse(node, v, n, n_i):
@@ -133,7 +122,7 @@ def branching_history_sweep_read(root, versions):
             #assert(val == i)
 
 @timeit
-def random_history_sweep_write(root, n):
+def random_history_sweep_write(root, v, n):
     all_versions = defaultdict(list)
 
     node = root
@@ -159,7 +148,7 @@ def random_history_sweep_read(root, versions):
             val = node.get_field("v0", version)
             #assert(val == i)
 
-LINKED_SIZE = 1024
+LINKED_SIZE = 16
 def linked_list():
     ns1 = [2**n for n in range(8)]
     ns2 = [2**n for n in range(8)]
@@ -169,32 +158,32 @@ def linked_list():
     linear_ts = []
     linear_ts_read = []
     for n in ns2:
-        root, _ = create_linked_list(int(LINKED_SIZE))
-        versions, t = linear_value_history_sweep_write(root, n)
+        (root, v), _ = create_linked_list(int(LINKED_SIZE))
+        versions, t = linear_value_history_sweep_write(root, v, n)
         linear_ts.append(t)
         linear_ts_read.append(linear_value_history_sweep_read(root, versions)[1])
 
     earliest_ts = []
     earliest_ts_read = []
     for n in ns2:
-        root, _ = create_linked_list(int(LINKED_SIZE))
-        versions, t = earliest_history_sweep_write(root, n)
+        (root, v), _ = create_linked_list(int(LINKED_SIZE))
+        versions, t = earliest_history_sweep_write(root, v, n)
         earliest_ts.append(t)
         earliest_ts_read.append(earliest_history_sweep_read(root, versions)[1])
 
     branching_ts = []
     branching_ts_read = []
     for n in ns2:
-        root, _ = create_linked_list(int(LINKED_SIZE))
-        versions, t = branching_history_sweep_write(root, n)
+        (root, v), _ = create_linked_list(int(LINKED_SIZE))
+        versions, t = branching_history_sweep_write(root, v, n)
         branching_ts.append(t)
         branching_ts_read.append(branching_history_sweep_read(root, versions)[1])
 
     random_ts = []
     random_ts_read = []
     for n in ns2:
-        root, _ = create_linked_list(int(LINKED_SIZE))
-        versions, t = random_history_sweep_write(root, n)
+        (root, v), _ = create_linked_list(int(LINKED_SIZE))
+        versions, t = random_history_sweep_write(root, v, n)
         random_ts.append(t)
         random_ts_read.append(random_history_sweep_read(root, versions)[1])
 
