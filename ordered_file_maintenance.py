@@ -48,7 +48,6 @@ class OrderedFile(list):
         level = 0  # what level we're looking at within the tree, going from bottom up
         while (True):
             height = int(math.log(len(arr)-1, 2))+1  # height of tree, ceiling functioned
-            #print(level, height)
             # check for being at a level such that we need to allocate more space in the array
             if level > height:
                 arr += [None] * 2**height
@@ -70,14 +69,8 @@ class OrderedFile(list):
 
             if block_density <= max_density:
                 # yay! we can stop at this level
-                ##print("\ni=%s, j=%s" % (start, end))
-                ##print("Arr=", arr)
-                ##print("\t adding ", elem)
                 count = arr._collapse(start, end, elem, pos)
-                ##print("Collapsed Arr=", arr)
-                ##print("\t count ", count)
                 arr._even_spread(start, end, count)
-                ##print("Spread Arr=", arr)
                 return
 
             # in this case, this level isn't good enough and we need to iterate and rewrite at a higher level
@@ -93,7 +86,6 @@ class OrderedFile(list):
     def _num_blocks(arr, level):
         # ceiling function of n/2^level*logn
         n = len(arr)
-        #print("n=%s" % n)
         return int((n-1)/(2**level * math.log(n, 2)))+1
 
     # collapse the interval from i to j, clumping elements to the left of it
@@ -117,7 +109,6 @@ class OrderedFile(list):
             # now look at this round's stored value and collapse it
             if temp_i_val is not None:
                 arr[next_pos] = temp_i_val
-                ##arr.callback(index, next_pos)
                 temp_i_val.set_index(next_pos)
                 next_pos += 1
             if index == pos:
@@ -132,14 +123,11 @@ class OrderedFile(list):
     # TODO make this more in-place
     def _even_spread(arr, i, j, count):
         newIndices = [i + (k*(j-i))//count for k in range(count)]
-        ##print("Indices=", newIndices)
         for it in range(count-1, -1, -1):
             elem = arr[i+it]
             index = newIndices[it]  # i + (it*(j-i))//count
             arr[i+it] = None
             arr[index] = elem
-            ##print("\t it=%s i+it=%s index=%s elem=%s" % (it, i+it, index, elem))
-            ##arr.callback(i+it, index)
             elem.set_index(index)
         return
 
