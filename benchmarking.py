@@ -72,7 +72,7 @@ def earliest_history_sweep_write(root, v, n):
     n_i = 0
     while node:
         for i in range(n):
-            version = node.set_field("v0", i, node.earliest_version)
+            version = node.set_field("v0", i, v)
             versions[n_i].append(version)
         node = node.get_field("p0", version)
         n_i += 1
@@ -106,8 +106,8 @@ def branching_history_sweep_write(root, v, n):
     node = root
     n_i = 0
     while node:
-        recurse(node, node.earliest_version, int(log(n, 2)), n_i)
-        node = node.get_field("p0", node.earliest_version)
+        recurse(node, v, int(log(n, 2)), n_i)
+        node = node.get_field("p0", v)
         n_i += 1
 
     return versions
@@ -128,7 +128,7 @@ def random_history_sweep_write(root, v, n):
     node = root
     n_i = 0
     while node:
-        versions = [node.earliest_version]
+        versions = [v]
         for i in range(n):
             version = random.choice(versions)
             new_version = node.set_field("v0", i, version)
