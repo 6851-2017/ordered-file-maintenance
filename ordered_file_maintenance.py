@@ -11,7 +11,7 @@ class OrderedFile(list):
 
     def __init__(self):
         super(OrderedFile, self).__init__([None, None])
- 
+
     # report what value is present at a given index pos
     def read(arr, pos):
         if arr[pos] is None:
@@ -64,8 +64,11 @@ class OrderedFile(list):
             block_density = block_element_count / block_max_elements
 
             depth = height - level
-            max_density = 3/4 + 1/4*depth/height
-            min_density = 1/2 - 1/4*depth/height
+            #max_density = 3/4 + 1/4*depth/height
+            #min_density = 1/2 - 1/4*depth/height
+            t = 1.5
+            max_density = t**(depth - height - 1)
+            min_density = t**(depth - height)
             #print(block_density, min_density, max_density)
 
             if block_density <= max_density:
@@ -152,7 +155,7 @@ class OrderedFile(list):
             if bucket is not None:
                 ret += bucket.parenth_format()
         return ret
-                
+
 
 
 
