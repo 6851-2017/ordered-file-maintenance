@@ -64,12 +64,9 @@ class OrderedFile(list):
             block_density = block_element_count / block_max_elements
 
             depth = height - level
-            #max_density = 3/4 + 1/4*depth/height
-            #min_density = 1/2 - 1/4*depth/height
             t = 1.5
             max_density = t**(depth - height - 1)
             min_density = t**(depth - height)
-            #print(block_density, min_density, max_density)
 
             if block_density <= max_density:
                 # yay! we can stop at this level
@@ -117,12 +114,10 @@ class OrderedFile(list):
 
     # rewrites all elements from i to j-1 to be evenly spread across the interval and return nothing
     # also inserts elem at the specified position while it's rewriting
-    # TODO make this more in-place
     def _even_spread(arr, i, j, count):
-        newIndices = [i + (k*(j-i))//count for k in range(count)]
         for it in range(count-1, -1, -1):
             elem = arr[i+it]
-            index = newIndices[it]  # i + (it*(j-i))//count
+            index = i + (it*(j-i))//count
             arr[i+it] = None
             arr[index] = elem
             elem.set_index(index)
