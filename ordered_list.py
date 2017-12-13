@@ -129,7 +129,6 @@ class OrderedList():
     # same as insert_after except there's nothing in the list so it can't be after something
     # pass in the root of the DS we're making an OL on
     def insert_first(self, root):
-        ##assert len(self.bucket_list) == 0  # this probably isn't true for OFM
         ver_ptr = VersionPtr(0, root, None)
         new_bucket = BottomBucket(index=0, parent=self, first_elt=ver_ptr)
         ver_ptr.bucket = new_bucket
@@ -168,7 +167,6 @@ class BottomBucket():
 
     # split into two bottom buckets by scanning and moving the second half, insert the second after the first in the parent
     def split(self):
-        #print("SPLITTING; self.count=%s" % self.count)
         ver_ptr = self.first_ptr
         prev_ptr = None
         count = self.count

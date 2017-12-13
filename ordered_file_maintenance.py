@@ -40,20 +40,21 @@ class OrderedFile(list):
 
     # add the element elem to the array after position pos, rewriting as needed to make space
     # return nothing; modify the array in place
-    # TODO Add middle log level
     def insert(arr, elem, pos):
         if pos > len(arr):
             raise ValueError("attempted inserting past the end of the array")
 
         level = 0  # what level we're looking at within the tree, going from bottom up
         while (True):
-            height = int(math.log(len(arr)-1, 2))+1  # height of tree, ceiling functioned
+            chunk_size = int(math.log(len(arr), 2))  # size of the bottom chunks
+            num_chunks = (len(arr)-1)//chunk_size + 1  # number of bottom chunks, ceiling functioned
+            height = int(math.log(num_chunks-1, 2))+1  # height of tree, ceiling functioned
             # check for being at a level such that we need to allocate more space in the array
             if level > height:
-                arr += [None] * 2**height
+                arr += [None] * (2**height * chunk_size)
                 height += 1
 
-            num_blocks = arr._num_blocks(level)
+            num_blocks = int((len(arr)-1)/(2**level * chunk_size)) + 1  # there are 2^level * chunk_size things in a block at this level
             # blocklen = len(arr)/num_blocks; blocknum = int(pos/blocklen); start, end = block_index*blocklen, (block_index+1)*blocklen
             block_index = int(pos * num_blocks / len(arr))
             start = int(block_index * len(arr) / num_blocks)
@@ -83,13 +84,6 @@ class OrderedFile(list):
     # also, while scanning, rewrite all elements from i to j-1 to be on the left side of the interval
     def _scan(arr, i, j):
         return len([x for x in arr[i:j] if x is not None])
-
-    # given the level up the tree we're at, we have 2^level * log(n) things in a block
-    # returns how many blocks there are in the tree at that level
-    def _num_blocks(arr, level):
-        # ceiling function of n/2^level*logn
-        n = len(arr)
-        return int((n-1)/(2**level * math.log(n, 2)))+1
 
     # collapse the interval from i to j, clumping elements to the left of it
     # if j > len(arr), just go to end of array
