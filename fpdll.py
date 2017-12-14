@@ -36,8 +36,8 @@ class DLLNode():
 class FPDLL():
     '''Fully persistent doubly linked list.'''
 
-    def __init__(self, comparator=lambda x, y: x<y):
-        self.root = BSTNode("ROOT", None, None, None)  # ROOT node, list actually starts at its child
+    def __init__(self, first_val, comparator=lambda x, y: x<y):
+        first_node = BSTNode(first_val, None, None, None) # have to start with something
         self.comparator = comparator
         self.earliest_version = self.root.earliest_version
         self.first = self.root
@@ -65,7 +65,7 @@ class FPDLL():
         new_version = node.set_parent(new_node, new_version)
         return new_version
 
-    # return a new version with the value deleted (if it existed)
+    # return a new version with the given node deleted
     def delete(self, node, version):
         parent = node.get_parent(version)
         child = node.get_child(version)
