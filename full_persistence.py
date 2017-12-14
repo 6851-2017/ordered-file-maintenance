@@ -160,7 +160,7 @@ class FPNode():
             if self.child is None:
                 raise Exception("Node has overflowed but doesn't have children to move to.")
             if version >= self.child.earliest_version:
-                return self.child._set_field_helper(field, value, version)
+                return self.child.set_field(field, value, version)
         if (version < self.earliest_version):
             raise Exception("Cannot set a field at a version (%s) earlier than a node's earliest version (%s)." % (version, self.earliest_version))
 
