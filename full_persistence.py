@@ -44,9 +44,28 @@ class Mod():
         return Mod(self.do_version, self.undo_version, self.node, self.field, value, self.old_value)
 
 
+class Field():
+    def __init__(self, node, value):
+        self.value = value
+        self.version = node.earliest_version
+
+    def get_value(self):
+        return self.value
+
+    def update_node(self, old_node, new_node, version):
+        if self.value == old_node and self.version >= version:
+            self.value = new_node
+
+    def copy_with_node(self, node):
+        return Field(node, self.value)
+
+
 class REVPTR():
-    def __init__(self, mod):
-        self.mod = mod
+    def __init__(self, obj):
+        self.object = obj  # a Mod or Field
+
+    def update_node(self, old_node, new_node, version):
+        self.object.update_node(old_node, new_node, version)
 
 
 class DO():
@@ -104,7 +123,7 @@ class FPNode():
         s += "EARLIEST VERSION: " + hex(self.earliest_version.get_index()) + "\n"
         s += "FIELDS:\n"
         for f in self.fields.keys():
-            s += "\t" + f + ": " + str(self.fields.get(f, self.earliest_version)) +"\n"
+            s += "\t" + f + ": " + str(self.fields.get(f, self.earliest_version).get_value()) +"\n"
         s += "REVERSE POINTERS:\n"
         for rp in self.reverse_pointers:
             s += str(rp) + " " + str(rp.mod) + "\n"
@@ -131,7 +150,8 @@ class FPNode():
         for change in self.changes[::-1]:
             if change.get_field() == field and change.get_version() <= version:
                 return change.get_value()
-        return self.fields.get(field)
+        f = self.fields.get(field)
+        return f.get_value() if f is not None else None
 
     # modify a field value (add a mod if not full, split node if it is) right after the given version
     # returns the VersionPtr for the new version created by this modification
@@ -190,11 +210,19 @@ class FPNode():
         self.child = child
 
         # set values of child fields
-        child.fields = self.fields.copy()
+        child.fields = {}
+        for f in self.fields:
+            field_obj = self.fields[f].copy_with_node(child)
+            child.fields[f] = field_obj
+            if type(field_obj.get_value()) is FPNode:
+                field_obj.get_value().reverse_pointers.append(REVPTR(field_obj))
         child.changes = self.changes[mid_index:]
         self.changes = self.changes[:mid_index]
         for change in self.changes:  # mods in the older half applied to newer half
-            child.fields[change.get_field()] = change.get_value()
+            field_obj = Field(child, change.get_value())
+            child.fields[change.get_field()] = field_obj
+            if type(field_obj.get_value()) is FPNode:
+                field_obj.get_value().reverse_pointers.append(REVPTR(field_obj))
         for change in child.changes:
             change.change_node(child)
 
@@ -202,15 +230,18 @@ class FPNode():
         old_revptrs = []
         new_revptrs = []
         for rp in self.reverse_pointers:
-            if rp.mod.do_version < mid_version:
+            if type(rp.object) is Mod:
+                if rp.object.do_version < mid_version:
+                    old_revptrs.append(rp)
+                if rp.object.undo_version >= mid_version:
+                    new_mod = rp.object.copy_with_value(child)
+                    new_revptrs.append(REVPTR(new_mod))  # make a new mod so it has the correct node
+            else:  # Field
                 old_revptrs.append(rp)
-            if rp.mod.undo_version >= mid_version:
-                new_mod = rp.mod.copy_with_value(child)
-                new_revptrs.append(REVPTR(new_mod))  # make a new mod so it has the correct node
 
         # go through revptrs and change their mods' node to be child and not self
         for revptr in self.reverse_pointers:
-            revptr.mod.update_node(self, child, mid_version)
+            revptr.update_node(self, child, mid_version)
 
         self.reverse_pointers = old_revptrs
         child.reverse_pointers = new_revptrs
