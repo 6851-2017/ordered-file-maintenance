@@ -11,7 +11,6 @@ class BSTNode():
         else:
             self.fppm = parent.fppm
             self.node = FPNode("", self.fppm, version)
-        self.node.fields["parent"] = Field(self.node, parent)
         self.node.fields["val"] = Field(self.node, val)
         self.node.fields["left"] = None
         self.node.fields["right"] = None
@@ -23,17 +22,11 @@ class BSTNode():
     def set_left(self, left, version):
         return self.node.set_field("left", left, version)
 
-    def set_parent(self, parent, version):
-        return self.node.set_field("parent", parent, version)
-
     def get_right(self, version):
         return self.node.get_field("right", version)
 
     def get_left(self, version):
         return self.node.get_field("left", version)
-
-    def get_parent(self, version):
-        return self.node.get_field("parent", version)
 
     def get_value(self, version):
         return self.node.get_field("val", version)
