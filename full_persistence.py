@@ -158,7 +158,7 @@ class FPNode():
     # also puts the undo of this modification immediately after
     def set_field(self, field, value, version, version_name=""):
         # check for an overflow in progress
-        if len(self.changes) >= 2*(self.parent.d+self.parent.p+1):
+        if self._num_mods() >= self._max_mods():
             if self.child is None:
                 raise Exception("Node has overflowed but doesn't have children to move to.")
             if version >= self.child.earliest_version:
@@ -178,7 +178,7 @@ class FPNode():
         self.changes.append(UNDO(mod))
 
         # overflow if needed
-        if len(self.changes) >= 2*(self.parent.d+self.parent.p+1):
+        if self._num_mods() >= self._max_mods():
             self._overflow()
 
         # update reverse_pointers
@@ -193,6 +193,14 @@ class FPNode():
 
 
     # PRIVATE METHODS
+
+    # return the number of changes made 
+    def _num_mods(self):
+        return len(self.changes)
+
+    # return the max number of changes made before overflow
+    def _max_mods(self):
+        return 2*(self.parent.d + self.parent.p + 1)
 
     # return a child object of the same type; overload in subclasses
     def _make_child(self, mid_version):
@@ -254,6 +262,9 @@ class FPRoot(FPNode):
     def __init__(self, parent, version):
         super(FPRoot, self).__init__("__ROOT__", parent, version)
         self.version_ptrs = []
+
+    def _num_mods(self):
+        return len(self.changes) + len(self.version_ptrs)
 
     def _make_child(self, mid_version):
         return FPRoot(self.parent, mid_version)

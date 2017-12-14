@@ -139,13 +139,13 @@ class TestFullPersistence(unittest.TestCase):
         node0 = FPNode("n0", ffpm, ffpm.first_version)
         v0 = root.set_field("node", node0, ffpm.first_version, "v")
 
-        for i in range(119):
+        for i in range(259):
             n0 = ffpm.get_root(v0).get_field("node", v0)
             v1 = n0.set_field("val0", i, v0, "%s" % i)
 
         version = v0
         versions = []
-        for i in range(119):
+        for i in range(259):
             n0 = ffpm.get_root(version).get_field("node", version)
             version = n0.set_field("val0", i, version, "%s" % i)
             versions.append((i, version))
