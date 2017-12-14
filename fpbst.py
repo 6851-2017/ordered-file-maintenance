@@ -1,6 +1,6 @@
 # jamb, rusch 6.851 fall 2017
 
-from full_persistence import FPPM, FPNode
+from full_persistence import FPPM, FPNode, Field
 
 
 class BSTNode():
@@ -11,8 +11,8 @@ class BSTNode():
         else:
             self.fppm = parent.fppm
             self.node = FPNode("", self.fppm, version)
-        self.node.fields["parent"] = parent
-        self.node.fields["val"] = val
+        self.node.fields["parent"] = Field(self.node, parent)
+        self.node.fields["val"] = Field(self.node, val)
         self.node.fields["left"] = None
         self.node.fields["right"] = None
         self.earliest_version = self.node.earliest_version
