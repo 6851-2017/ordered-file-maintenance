@@ -37,31 +37,28 @@ class FPDLL():
     '''Fully persistent doubly linked list.'''
 
     def __init__(self, first_val, comparator=lambda x, y: x<y):
-        first_node = BSTNode(first_val, None, None, None) # have to start with something
+        first_node = DLLNode(first_val, None, None, None) # have to start with something
         self.comparator = comparator
-        self.earliest_version = self.root.earliest_version
-        self.first = self.root
-        self.last = self.root
+        self.earliest_version = first_node.earliest_version
+        self.first = first_node
+        self.last = first_node
 
     def get_first(self):
         return self.first
-
-    def get_last(self):
-        return self.last
 
     # return a new version with the value inserted after the given DLLNode
     def insert_after(self, node, val, version):
         child = node.get_child(version)
         new_node = DLLNode(val, node, child, version)
         new_version = node.set_child(new_node, version)
-        new_version = child.set_parent(new_node, new_version)
+        new_version = child.set_parent(new_node, new_version) if child else new_version
         return new_version
 
     # return a new version with the value inserted before the given DLLNode
     def insert_before(self, node, val, version):
         parent = node.get_parent(version)
         new_node = DLLNode(val, parent, node, version)
-        new_version = parent.set_child(new_node, version)
+        new_version = parent.set_child(new_node, version) if parent else version
         new_version = node.set_parent(new_node, new_version)
         return new_version
 
@@ -69,7 +66,25 @@ class FPDLL():
     def delete(self, node, version):
         parent = node.get_parent(version)
         child = node.get_child(version)
-        new_version = parent.set_child(child, version)
-        new_version = child.set_parent(parent, new_version)
+        new_version = parent.set_child(child, version) if parent else version
+        new_version = child.set_parent(parent, new_version) if child else new_version
         return new_version
+
+    def format(self, version):
+        s = "DLL"
+        node = self.first
+        while (node is not None):
+            s += " - " + str(node.get_value(version))
+            node = node.get_child(version)
+        return s
+
+
+dll = FPDLL(3)
+node = dll.get_first()
+vers = dll.earliest_version
+vers = dll.insert_after(node, 4, vers)
+node = dll.get_first().get_child(vers)
+vers = dll.insert_after(node, 5, vers)
+print(dll.format(vers))
+
         
