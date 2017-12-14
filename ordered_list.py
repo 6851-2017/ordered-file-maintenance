@@ -108,9 +108,9 @@ class OrderedListComparison(list):
 class OrderedList():
     '''The real one, with OFM.'''
         # constructor
-    def __init__(self):
+    def __init__(self, T=1.5):
         # should call callback on (index, new_index) any time we move a BottomBucket from index to new_index
-        self.bucket_list = OrderedFile()
+        self.bucket_list = OrderedFile(T)
         self.count = 0
 
     # insert a new VersionPtr into the list after the given VersionPtr and return it
