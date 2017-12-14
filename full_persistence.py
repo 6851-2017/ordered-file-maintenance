@@ -13,11 +13,13 @@ class FPPM():
         Queries return the root node at a given version.'''
 
     # constructor
-    def __init__(self):
-        self.versioner = OrderedList()
+    def __init__(self, d=3, p=3, T=1.5):
+        self.versioner = OrderedList(T=T)
         root = FPRoot(self, None)
         self.first_version = self.versioner.insert_first(root)
         root.earliest_version = self.first_version
+        self.d = d
+        self.p = p
 
     # returns the root FPNode at the given VersionPtr
     def get_root(self, version):
@@ -136,7 +138,7 @@ class FPNode():
     # also puts the undo of this modification immediately after
     def set_field(self, field, value, version, version_name=""):
         # check for an overflow in progress
-        if len(self.changes) >= 2*(d+p+1):
+        if len(self.changes) >= 2*(self.parent.d+self.parent.p+1):
             if self.child is None:
                 raise Exception("Node has overflowed but doesn't have children to move to.")
             if version >= self.child.earliest_version:
@@ -156,7 +158,7 @@ class FPNode():
         self.changes.append(UNDO(mod))
 
         # overflow if needed
-        if len(self.changes) >= 2*(d+p+1):
+        if len(self.changes) >= 2*(self.parent.d+self.parent.p+1):
             self._overflow()
 
         # update reverse_pointers

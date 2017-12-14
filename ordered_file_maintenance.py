@@ -2,15 +2,16 @@
 
 
 import math
-
+T = 1.5
 
 
 
 # represent a file with this behind-the-scenes thing that keeps elements O(1) apart and takes only O(log^2(n)) updates
 class OrderedFile(list):
 
-    def __init__(self):
+    def __init__(self, T=1.5):
         super(OrderedFile, self).__init__([None, None])
+        self.T = T
 
     # report what value is present at a given index pos
     def read(arr, pos):
@@ -64,9 +65,10 @@ class OrderedFile(list):
             block_density = block_element_count / block_max_elements
 
             depth = height - level
-            t = 1.5
-            max_density = t**(depth - height - 1)
-            min_density = t**(depth - height)
+            if depth == 0:
+                max_density = 1
+            else:
+                max_density = arr.T ** -depth
 
             if block_density <= max_density:
                 # yay! we can stop at this level
